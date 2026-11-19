@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Does Spotify Listen to You? A Product Teardown</title>
+<meta name="description" content="A PM case study: Spotify's radio recycles songs you already know. Playlist Coach is the MVP that lets you steer the stream you started, with a plan to prove it.">
+<meta name="author" content="Jyotiraditya Bordoloi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Does Spotify Listen to You? A Product Teardown">
+<meta property="og:description" content="The problem, the MVP and how I'd prove it: a PM case study on Spotify music discovery.">
+<meta property="og:image" content="img/share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1ED760">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23121212'/%3E%3Cpath d='M20 40V24l14 8z' fill='%231ED760'/%3E%3Crect x='38' y='22' width='6' height='20' rx='2' fill='%23FF4FA3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1ED760; --ink:#121212; --pink:#FF4FA3; --yellow:#FFD23F; --lav:#C5B4F2; --orange:#FF6437;
+  --soft:#F3F3F1; --line:#E4E4E0; --muted:#5b5b5b; --muted-d:#a9a9a9;
+  --head:"Archivo Black","Arial Black",Arial,sans-serif;
+  --body:Inter,Arial,sans-serif;
+  --serif:Newsreader,Cambria,Georgia,serif;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --r:16px; --gut:clamp(20px,4vw,48px); --max:1160px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{font-family:var(--body);color:var(--ink);background:#fff;font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%;height:auto}
+a{color:inherit}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut)}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;z-index:100}
+.skip:focus{left:8px}
+:focus-visible{outline:3px solid var(--pink);outline-offset:3px;border-radius:6px}
+
+/* buttons: press feedback, hover only on real pointers */
+.btn{display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;text-decoration:none;padding:12px 20px;border-radius:999px;background:var(--ink);color:#fff;border:2px solid var(--ink);cursor:pointer;min-height:46px;white-space:nowrap;transition:transform 160ms var(--ease-out),background-color 160ms ease,color 160ms ease}
+.btn:active{transform:scale(0.97)}
+.btn.green{background:var(--green);border-color:var(--green);color:var(--ink)}
+.btn.line{background:transparent;color:var(--ink)}
+.btn.line-w{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover{background:#2a2a2a}
+  .btn.green:hover{background:#3be477}
+  .btn.line:hover{background:var(--ink);color:#fff}
+  .btn.line-w:hover{background:#fff;color:var(--ink)}
+  .lift{transition:transform 200ms var(--ease-out),box-shadow 200ms ease}
+  .lift:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.10)}
+}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(18,18,18,.94);backdrop-filter:blur(10px);color:#fff}
+.nav .wrap{display:flex;align-items:center;gap:20px;height:60px}
+.brand{font-weight:700;font-size:15px;text-decoration:none;display:flex;align-items:center;gap:0;white-space:nowrap}
+.brand i{margin-right:10px;width:10px;height:10px;border-radius:50%;background:var(--green)}
+.nav ul{display:flex;gap:2px;list-style:none;margin-left:auto}
+.nav ul a{font-size:14px;text-decoration:none;color:#cfcfcf;padding:8px 12px;border-radius:8px;transition:color 150ms ease,background-color 150ms ease}
+@media (hover:hover){.nav ul a:hover{color:#fff;background:rgba(255,255,255,.08)}}
+.nav .btn{padding:8px 16px;min-height:40px;font-size:14px}
+
+/* type */
+section{padding:clamp(72px,9vw,112px) 0}
+.eyebrow{display:block;font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px}
+h1,h2{font-family:var(--head);font-weight:400;line-height:1.02;letter-spacing:-.01em}
+h2{font-size:clamp(32px,4.4vw,52px);max-width:20ch;margin-bottom:18px}
+h3{font-size:19px;line-height:1.3;margin-bottom:6px}
+.lede{font-size:clamp(18px,1.9vw,20px);max-width:60ch;color:#333;margin-bottom:44px}
+.dark .lede{color:#cfcfcf}
+.serif{font-family:var(--serif);font-style:italic;font-weight:400}
+.label{display:block;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px;color:var(--muted)}
+.dark{background:var(--ink);color:#fff}
+.dark .label{color:var(--muted-d)}
+.note{font-size:13px;color:var(--muted);margin-top:16px}
+.dark .note{color:var(--muted-d)}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--pink);color:#fff;font-weight:700;font-size:13px;flex:none}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--ink);color:#fff;vertical-align:middle}
+.pill.p1{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.phone{position:relative;background:#0b0b0b;border-radius:30px;padding:9px;box-shadow:0 18px 44px rgba(0,0,0,.28)}
+.phone img{border-radius:22px;width:100%}
+
+/* hero */
+.hero{background:var(--green);padding:clamp(48px,6vw,80px) 0 clamp(56px,6vw,88px);overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(44px,6.2vw,80px);margin-bottom:18px;max-width:11ch}
+.hero .sub{font-family:var(--serif);font-style:italic;font-size:clamp(20px,2vw,24px);line-height:1.35;max-width:34ch;margin-bottom:28px}
+.tldr{background:var(--ink);color:#fff;border-radius:var(--r);padding:22px 24px;display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;margin-bottom:28px}
+.tldr .label{color:var(--green);margin-bottom:4px}
+.tldr p{font-size:15px;line-height:1.45;color:#e6e6e6}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.hero-art{position:relative;height:clamp(400px,40vw,540px)}
+.hero-art .blob{position:absolute;right:-14%;top:8%;width:90%;aspect-ratio:1;border-radius:50%;background:var(--pink)}
+.hero-art .phone{position:absolute;width:54%}
+.hero-art .p1{left:2%;top:0;rotate:-4deg;z-index:2}
+.hero-art .p2{right:0;top:10%;rotate:5deg}
+
+/* entrance: once, short, staggered, ease-out; never blocks reading */
+.enter>*{animation:rise 520ms var(--ease-out) both}
+.enter>*:nth-child(2){animation-delay:50ms}
+.enter>*:nth-child(3){animation-delay:100ms}
+.enter>*:nth-child(4){animation-delay:150ms}
+.enter>*:nth-child(5){animation-delay:200ms}
+.hero-art .phone{animation:rise 700ms 120ms var(--ease-out) both}
+.hero-art .p2{animation-delay:200ms}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+
+/* problem */
+.prob{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:start}
+.vs{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.vs-row{display:grid;grid-template-columns:100px repeat(5,1fr);align-items:center;border-top:1px solid var(--line)}
+.vs-row:first-child{border-top:0}
+.vs-row>*{padding:12px 10px;font-size:14px;line-height:1.3}
+.vs-row>.k{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);padding-left:16px}
+.vs-row.steps>*:not(.k){font-weight:700}
+.vs-row.steps em{font-style:normal;color:var(--pink);margin-right:4px}
+.chip{display:inline-block;white-space:nowrap;border-radius:999px;padding:5px 10px;font-weight:700;font-size:12px;background:var(--green)}
+.chip.off{background:#eee;color:#666}
+.vs-row.thinks>*:not(.k){font-family:var(--serif);font-style:italic;font-size:15px}
+.vs-foot{background:var(--soft);padding:14px 16px;font-family:var(--serif);font-style:italic;font-size:18px}
+.vs-foot b{color:var(--pink);font-weight:500}
+.ev{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px}
+.ev b{display:block;font-family:var(--head);font-weight:400;font-size:40px;line-height:1;margin-bottom:6px}
+.ev b.p{color:var(--pink)}
+.ev span{font-size:14px;line-height:1.4;display:block;color:#333}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.shot .phone{padding:6px;border-radius:22px}
+.shot .phone img{border-radius:16px;aspect-ratio:9/13;object-fit:cover;object-position:top}
+.shot h3{font-size:15px;margin-top:12px;margin-bottom:2px}
+.shot p{font-size:13px;color:var(--muted);line-height:1.4}
+
+/* who + gap */
+.who{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:stretch}
+.persona{display:flex;flex-direction:column;background:var(--lav);border-radius:var(--r);padding:28px}
+.persona h3{font-family:var(--head);font-weight:400;font-size:28px;margin:2px 0 4px}
+.persona .meta{font-size:14px;color:#3a3a3a;margin-bottom:16px}
+.persona ul{list-style:none;font-size:16px}
+.persona li{margin-bottom:8px}
+.persona blockquote{font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.3;border-top:1px solid rgba(0,0,0,.15);padding-top:14px;margin-top:14px}
+.also{margin-top:auto;padding-top:16px;font-size:14px;color:#333}
+.also b{font-weight:700}
+.gap{background:var(--soft);border-radius:var(--r);padding:28px}
+.gap h3{font-family:var(--head);font-weight:400;font-size:26px;line-height:1.1;margin-bottom:16px}
+.gap ul{list-style:none}
+.gap li{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:15px}
+.gap li b{font-size:15px}
+.ws{margin-top:18px;background:var(--ink);color:#fff;border-radius:12px;padding:16px 18px;font-weight:700;font-size:17px;line-height:1.35}
+.ws span{display:block;color:var(--green);font-size:11px;letter-spacing:.2em;margin-bottom:4px}
+
+/* MVP */
+.mvp{background:var(--green)}
+.mvp-grid{display:grid;grid-template-columns:.9fr .9fr 1.2fr;gap:24px;align-items:start}
+.mock{background:var(--ink);color:#fff;border-radius:28px;padding:18px 16px 20px;font-size:13px;position:relative;box-shadow:0 18px 40px rgba(0,0,0,.22)}
+.mock .top{text-align:center;color:#aaa;font-size:12px;margin-bottom:12px}
+.art{aspect-ratio:1;border-radius:6px;display:grid;place-items:center;margin:0 auto 10px;width:56%;background:var(--yellow)}
+.mock h4{font-size:17px;text-align:center}
+.mock .by{text-align:center;color:#aaa;font-size:12px;margin-bottom:12px}
+.ask{text-align:center;font-weight:700;margin-bottom:10px}
+.chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.chips span{border-radius:999px;padding:6px 12px;background:#2a2a2a;font-weight:700}
+.chips span.on{background:var(--green);color:var(--ink)}
+.dial{display:flex;align-items:center;gap:8px;color:#aaa;font-size:12px;margin-bottom:12px}
+.dial div{flex:1;height:4px;background:#333;border-radius:2px;position:relative}
+.dial div:before{content:"";position:absolute;inset:0 28% 0 0;background:var(--green);border-radius:2px}
+.dial div:after{content:"";position:absolute;left:72%;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
+.up{display:flex;gap:10px;align-items:center;margin-top:9px}
+.up i{width:40px;height:40px;border-radius:4px;flex:none}
+.up b{display:block;font-size:14px}
+.up small{color:var(--green);font-size:12px}
+.np{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.np i{width:64px;height:64px;background:var(--orange);border-radius:4px;flex:none}
+.box{border-radius:12px;padding:12px;margin-bottom:10px;background:#242424}
+.box.coach{border:2px solid var(--green);background:#16301f}
+.box .label{font-size:10px;margin-bottom:6px;color:var(--green)}
+.acts{display:flex;gap:8px;margin-top:10px}
+.acts span{border-radius:999px;padding:6px 12px;font-weight:700;background:var(--green);color:var(--ink)}
+.acts span.no{background:transparent;border:1px solid #fff;color:#fff}
+.box u{color:var(--green);text-decoration:none;font-weight:700}
+.mock .num{position:absolute;right:-12px;border:2px solid #fff}
+.mcap{font-size:12px;font-weight:700;letter-spacing:.16em;margin-bottom:12px}
+.feat{display:flex;gap:14px;margin-bottom:18px}
+.feat .num{background:var(--ink)}
+.feat h3{font-size:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.feat p{font-size:15px;line-height:1.45}
+.cut{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px}
+.cut .card{background:#fff;border-radius:var(--r);padding:24px}
+.rank{list-style:none;margin-top:6px}
+.rank li{display:grid;grid-template-columns:1fr 120px 44px;gap:10px;align-items:center;padding:7px 0;font-size:15px;border-top:1px solid var(--line)}
+.rank li:first-child{border-top:0}
+.rank i{display:block;height:12px;border-radius:2px;background:var(--green)}
+.rank i.y{background:var(--yellow)}.rank i.g{background:#cfcfcf}
+.rank b{text-align:right}
+.rank li.cutline{border-top:2px dashed var(--pink)}
+.rank li.out{color:#777}
+.cut .card p{font-size:15px;margin-bottom:10px}
+.cut .card h3{font-size:18px}
+
+/* measure */
+.meas{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.ns{background:var(--green);color:var(--ink);border-radius:var(--r);padding:26px}
+.ns b{display:block;font-family:var(--head);font-weight:400;font-size:clamp(26px,2.8vw,34px);line-height:1.05;margin:2px 0 8px}
+.ns .tgt{font-family:var(--head);font-size:44px;line-height:1}
+.drivers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.drivers div{background:#232323;border-radius:12px;padding:12px;font-size:14px;font-weight:700}
+.drivers small{display:block;font-weight:400;color:#aaa;font-size:12px}
+.drivers em{font-style:normal;color:var(--green)}
+.lie{display:flex;gap:14px;background:#232323;border-radius:var(--r);padding:18px;margin-top:14px}
+.lie b{width:30px;height:30px;border-radius:50%;background:var(--pink);display:grid;place-items:center;flex:none}
+.lie h3{font-family:var(--serif);font-style:italic;font-weight:400;font-size:20px}
+.lie p{font-size:14px;color:#cfcfcf}
+.test{list-style:none}
+.test li{display:grid;grid-template-columns:120px 1fr;gap:14px;padding:13px 0;border-top:1px solid #333;font-size:15px}
+.test li span{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--muted-d);padding-top:3px}
+.test li b{color:#fff}
+
+/* risks */
+.risks{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.risk{display:grid;grid-template-columns:1fr 24px 1fr;gap:12px;padding:16px 0;border-top:1px solid var(--line);font-size:15px;align-items:start}
+.risk .ar{color:var(--pink);font-weight:700}
+.risk b{display:block}
+.plan{background:var(--ink);color:#fff;border-radius:var(--r);padding:26px}
+.plan .label{color:var(--green)}
+.plan li{display:grid;grid-template-columns:40px 1fr;gap:4px;margin-bottom:16px;list-style:none}
+.plan li b{font-family:var(--head);color:var(--pink);font-size:18px}
+.plan li strong{display:block;font-size:16px}
+.plan li span{color:#b3b3b3;font-size:14px}
+.honest{margin-top:22px;font-size:14px;color:var(--muted);max-width:56ch}
+
+/* close */
+.close{background:var(--ink);color:#fff;text-align:left}
+.close h2{max-width:22ch}
+.close .ctas{margin-top:8px}
+.take{font-family:var(--serif);font-style:italic;font-size:clamp(22px,2.4vw,28px);max-width:40ch;color:#e6e6e6;margin-bottom:28px}
+.contact{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;background:#1d1d1d;border-radius:var(--r);padding:24px 28px;margin-bottom:22px}
+.who-name{font-family:var(--head);font-size:clamp(24px,2.6vw,30px);line-height:1.1}
+.who-role{color:#bdbdbd;font-size:15px;margin-top:4px}
+.more{font-size:15px;color:#bdbdbd;display:flex;gap:12px;flex-wrap:wrap}
+.more a{color:#fff;text-underline-offset:4px;text-decoration-color:rgba(255,255,255,.35);transition:text-decoration-color 150ms ease}
+@media (hover:hover){.more a:hover{text-decoration-color:var(--green)}}
+@media (max-width:560px){.more{flex-direction:column;gap:8px}.more span{display:none}}
+footer a{color:#fff}
+footer{background:var(--ink);color:#9a9a9a;border-top:1px solid #2a2a2a;padding:28px 0;font-size:13px}
+
+/* responsive */
+@media (max-width:1000px){
+  .nav ul{display:none}
+  .nav .btn{margin-left:auto}
+  .mvp-grid{grid-template-columns:1fr 1fr}
+  .mvp-grid .feats{grid-column:1/-1}
+}
+@media (max-width:860px){
+  body{font-size:16px}
+  .hero .wrap,.prob,.who,.meas,.risks,.cut{grid-template-columns:1fr}
+  .hero-art{height:460px;max-width:420px}
+  .vs{overflow-x:auto}
+  .vs-inner{min-width:640px}
+}
+@media (max-width:560px){
+  .brand .long,.nav .btn .long{display:none}
+  .tldr{grid-template-columns:1fr}
+  .ctas .btn{width:100%}
+  .ev{grid-template-columns:1fr;gap:16px}
+  .shots{grid-template-columns:1fr 1fr}
+  .shots .shot:last-child{display:none}
+  .mvp-grid{grid-template-columns:1fr}
+  .mock .num{right:-8px}
+  .drivers{grid-template-columns:1fr 1fr}
+  .gap li{grid-template-columns:1fr;gap:2px}
+  .risk{grid-template-columns:1fr}
+  .risk .ar{display:none}
+  .rank li{grid-template-columns:1fr 70px 40px}
+  .test li{grid-template-columns:1fr;gap:2px}
+  .hero-art{height:380px}
+}
+.prob>*,.who>*,.meas>*,.risks>*,.cut>*,.mvp-grid>*,.hero .wrap>*{min-width:0}
+@media (prefers-reduced-motion:reduce){
+  .enter>*,.hero-art .phone{animation:fade 200ms ease both}
+  @keyframes fade{from{opacity:0}}
+  html{scroll-behavior:auto}
+  .btn,.lift{transition:background-color 160ms ease,color 160ms ease}
+  .btn:active{transform:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the case study</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><i></i>Playlist Coach<span class="long">&nbsp;· a Spotify case study</span></a>
+    <ul>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#mvp">MVP</a></li>
+      <li><a href="#measure">Proof</a></li>
+      <li><a href="#risks">Risks</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a class="btn green" href="Spotify_Teardown_Playlist_Coach.pdf" download>Download<span class="long">&nbsp;the deck</span></a>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- HERO: the 30-second read -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="enter">
+      <span class="eyebrow">PM case study · Spotify · by Jyotiraditya Bordoloi</span>
+      <h1>Does Spotify listen to you?</h1>
+      <p class="sub">Spotify is world-class at replay. When you try to discover something new, it plays your past back to you.</p>
+      <div class="tldr">
+        <div><span class="label">Problem</span><p>Radio, shuffle and autoplay recycle songs you already know. Skipping doesn’t change what plays next.</p></div>
+        <div><span class="label">Insight</span><p>The dashboard logs a healthy 30-minute session. The listener found zero new songs.</p></div>
+        <div><span class="label">MVP</span><p>Playlist Coach: steer the stream you already started, and see why each song plays.</p></div>
+        <div><span class="label">Proof</span><p>4-week A/B test. North Star: new-track saves per user per week, +10%.</p></div>
+      </div>
+      <div class="ctas">
+        <a class="btn" href="#mvp">See the MVP</a>
+        <a class="btn line" href="#problem">Start with the problem</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="blob"></div>
+      <div class="phone p1"><img src="img/home.jpg" alt="" width="640" height="1459"></div>
+      <div class="phone p2"><img src="img/library.jpg" alt="" width="640" height="1459"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 1 PROBLEM -->
+<section id="problem">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">01 · The problem</span>
+    <h2>The session looks healthy. The listener found nothing new.</h2>
+    <p class="lede">I followed one real listener, Arjun, as he tried to find new music on Android. Every step counts as engagement. None of it is discovery.</p>
+    <div class="prob">
+      <div>
+        <div class="vs"><div class="vs-inner">
+          <div class="vs-row steps"><span class="k">STEP</span><span><em>1</em>Open app</span><span><em>2</em>Play radio</span><span><em>3</em>Let it play</span><span><em>4</em>Skip ×3</span><span><em>5</em>Leave</span></div>
+          <div class="vs-row thinks"><span class="k">ARJUN</span><span>“Let me find something new.”</span><span>“Good songs. Heard them all.”</span><span>“Wait, I know these.”</span><span>“Skipping changes nothing.”</span><span>“Spotify is for replay.”</span></div>
+          <div class="vs-row"><span class="k">DASHBOARD</span><span><i class="chip">Open ✓</i></span><span><i class="chip">Play ✓</i></span><span><i class="chip">30 min ✓</i></span><span><i class="chip off">3 skips</i></span><span><i class="chip off">Ends</i></span></div>
+          <div class="vs-foot">Engagement is up. <b>Discovery is zero.</b> More listening time is not the same as more value.</div>
+        </div></div>
+        <div class="ev">
+          <div><b class="p">91%</b><span>of 1,067 poll voters say they hear the same few songs</span></div>
+          <div><b>56</b><span>songs into one radio before a single new track</span></div>
+          <div><b>~5%</b><span>of one playlist radio was new and relevant</span></div>
+        </div>
+        <p class="note">Sources: Digital Music News poll; two Spotify Community posts (single listeners, not averages); my own screenshots, Oct 2026.</p>
+      </div>
+      <div>
+        <span class="label">What the real screens show</span>
+        <div class="shots">
+          <div class="shot"><div class="phone"><img src="img/home.jpg" alt="Spotify Home: eight shortcuts to past listening" width="640" height="1459" loading="lazy"></div><h3>Home looks back</h3><p>All 8 shortcuts come from the past. Discovery sits below the fold.</p></div>
+          <div class="shot"><div class="phone"><img src="img/playlist.jpg" alt="A playlist where shuffle is the only control" width="640" height="1459" loading="lazy"></div><h3>One knob: shuffle</h3><p>No “newer”, no “not this”, no “why this?”.</p></div>
+          <div class="shot"><div class="phone"><img src="img/library.jpg" alt="Your Library sorted by Recents, with On Repeat" width="640" height="1459" loading="lazy"></div><h3>On Repeat is a product</h3><p>Library is sorted by Recents. Nothing new lives here.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 WHO + GAP -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">02 · Who it’s for, and the gap</span>
+    <h2>Built for the Explorer. Nobody serves him today.</h2>
+    <div class="who">
+      <article class="persona lift">
+        <span class="label" style="color:#3a3a3a">Primary user</span>
+        <h3>Arjun, the Explorer</h3>
+        <p class="meta">24 · Bengaluru · Premium for 5 years · starts Song Radio to find new artists</p>
+        <ul>
+          <li><b>Needs</b> new artists that still fit the song he started from</li>
+          <li><b>Hates</b> that every radio drifts back to his Liked Songs</li>
+        </ul>
+        <blockquote>“I didn’t start a radio to hear my own playlist back.”</blockquote>
+        <p class="also"><b>Also served:</b> the Curator (keep my vibe, add a few) and the Lean-back (must work with zero taps, so smart defaults). Proto-personas from secondary research.</p>
+      </article>
+      <div class="gap lift">
+        <h3>Everyone generates playlists. Nobody steers.</h3>
+        <ul>
+          <li><b>Spotify</b><span>Prompted Playlist, AI DJ. Radio, shuffle and autoplay stay a black box.</span></li>
+          <li><b>YouTube Music</b><span>Queue chips steer, but never say why a track was picked.</span></li>
+          <li><b>Apple Music</b><span>Prompt-made playlists. Nothing helps once music is playing.</span></li>
+          <li><b>Deezer</b><span>Flow Tuner toggles genres, only inside Flow.</span></li>
+        </ul>
+        <div class="ws"><span>THE WHITE SPACE</span>Track-level steering, with a reason, inside the stream you already started.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 MVP -->
+<section class="mvp" id="mvp">
+  <div class="wrap">
+    <span class="eyebrow">03 · The MVP</span>
+    <h2>Playlist Coach: steer the radio you started</h2>
+    <p class="lede" style="color:#16301f">Not a new tab and not another generated playlist. A thin layer inside Song Radio, Smart Shuffle and autoplay, where the listener already shows intent.</p>
+    <div class="mvp-grid">
+      <div>
+        <p class="mcap">AT THE START</p>
+        <div class="mock">
+          <p class="top">Song radio · Coach on</p>
+          <div class="art"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><path fill="#121212" d="M9 17.5a2.5 2.5 0 1 1-2.5-2.5c.36 0 .7.08 1 .21V5l12-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.36 0 .7.08 1 .21V6.3l-8 1.33z"/></svg></div>
+          <h4>Midnight Static</h4>
+          <p class="by">Lumen Harbor · your seed song</p>
+          <p class="ask">What do you want right now?</p>
+          <div class="chips"><span class="on">New to me</span><span>Stay close</span><span>Mix</span></div>
+          <div class="dial">Familiar<div></div>New</div>
+          <div class="up"><i style="background:var(--lav)"></i><div><b>Paper Lanterns</b><small>New to you · same dreamy guitars</small></div></div>
+          <div class="up"><i style="background:var(--orange)"></i><div><b>Low Tide Radio</b><small>Fans of your seed love this</small></div></div>
+          <span class="num" style="top:55%">1</span>
+          <span class="num" style="top:67%">2</span>
+        </div>
+      </div>
+      <div>
+        <p class="mcap">MID-SESSION</p>
+        <div class="mock">
+          <p class="top">Now playing · Coach on</p>
+          <div class="np"><i></i><div><b style="font-size:16px">Neon Hallway</b><br><span style="color:#aaa">Copper Kites</span></div></div>
+          <div class="box coach"><span class="label">COACH</span><b>You skipped 4 upbeat songs. Keep it mellow?</b><div class="acts"><span>Yes, keep it mellow</span><span class="no">No</span></div></div>
+          <div class="box"><b>✓ Got it. 6 similar songs removed.</b><br><span style="color:#aaa">They won’t come back.</span> <u>Undo</u></div>
+          <div class="box"><span class="label" style="color:#aaa">WHY THIS SONG?</span>You started from Midnight Static: same dreamy guitars, slow tempo, and new to you.</div>
+          <span class="num" style="top:33%">3</span>
+          <span class="num" style="top:60%">4</span>
+          <span class="num" style="top:83%">5</span>
+        </div>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="num">1</span><div><h3>Intent check-in <span class="pill">P0</span></h3><p>One tap before radio starts: New to me, Stay close or Mix.</p></div></div>
+        <div class="feat"><span class="num">2</span><div><h3>Discovery dial <span class="pill">P0</span></h3><p>Familiar ↔ New for this session. The session outweighs your history.</p></div></div>
+        <div class="feat"><span class="num">3</span><div><h3>Live coaching <span class="pill">P0</span></h3><p>Spots skip patterns and offers a one-tap fix.</p></div></div>
+        <div class="feat"><span class="num">4</span><div><h3>Feedback that sticks <span class="pill">P0</span></h3><p>Removed songs never return, and a receipt proves it.</p></div></div>
+        <div class="feat"><span class="num">5</span><div><h3>Why this song <span class="pill p1">P1</span></h3><p>A plain-words reason tied to your seed song.</p></div></div>
+      </div>
+    </div>
+
+    <div class="cut">
+      <div class="card lift">
+        <span class="label">How I picked the MVP · RICE</span>
+        <ul class="rank">
+          <li><span>Feedback that sticks</span><i style="width:100%"></i><b>42.7</b></li>
+          <li><span>Intent check-in</span><i style="width:98%"></i><b>42.0</b></li>
+          <li><span>Discovery dial</span><i style="width:82%"></i><b>35.0</b></li>
+          <li><span>Live coaching</span><i style="width:59%"></i><b>25.0</b></li>
+          <li><span>Why this song</span><i class="y" style="width:33%"></i><b>14.0</b></li>
+          <li class="cutline out"><span>Home discovery module</span><i class="g" style="width:21%"></i><b>9.0</b></li>
+          <li class="out"><span>Chat with your radio</span><i class="g" style="width:11%"></i><b>4.8</b></li>
+        </ul>
+        <p class="note">Dashed line = MVP cut. ~13 person-months for 4 P0s + 1 P1. Scores are assumptions to re-score with real data.</p>
+      </div>
+      <div class="card lift">
+        <span class="label">Trade-offs I made</span>
+        <h3>Why not fix Home first?</h3>
+        <p>Moving discovery up the Home screen raises reach, not quality. If radio still recycles songs, more people just find the loop faster. Fix the radio first, then promote it on Home in v2.</p>
+        <h3>Why keep live coaching at P0?</h3>
+        <p>It scores 4th and is the riskiest bet, at 50% confidence. It is also the one thing no competitor has, so it stays in, behind a canary.</p>
+        <h3>Why cut chat?</h3>
+        <p>Typing to your radio is the flashiest idea and the weakest case: 5 person-months, 40% confidence, and lean-back users won’t type.</p>
+      </div>
+    </div>
+    <p class="note" style="color:#174d2a">Track and artist names in the mockups are invented.</p>
+  </div>
+</section>
+
+<!-- 4 MEASURE -->
+<section class="dark" id="measure">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--green)">04 · How we’d know it worked</span>
+    <h2>One number to chase, and a check that skips can’t fake</h2>
+    <div class="meas">
+      <div>
+        <div class="ns">
+          <span class="label" style="color:#174d2a">North Star</span>
+          <b>New-track saves per user, per week</b>
+          <span class="tgt">+10%</span>
+          <p style="font-size:14px;margin-top:6px">It needs both halves: new songs reach you, and you keep them.</p>
+        </div>
+        <div class="drivers">
+          <div>Early skips <em>−15%</em><small>radio, under 30s</small></div>
+          <div>Repeat ratio <em>−20%</em><small>recycled songs</small></div>
+          <div>Freshness <em>+15%</em><small>new, heard 30s+</small></div>
+          <div>Save rate <em>+5%</em><small>new tracks kept</small></div>
+        </div>
+        <div class="lie"><b>!</b><div><h3>Skip rate alone can lie.</h3><p>A very low skip rate can mean radio only plays familiar songs. Early skips must fall while freshness rises.</p></div></div>
+      </div>
+      <div>
+        <span class="label">The experiment</span>
+        <ul class="test">
+          <li><span>HYPOTHESIS</span><p>If Premium listeners can steer radio, <b>new-track saves per user rise 10%+</b>, because more of what plays is new and a good fit.</p></li>
+          <li><span>WHO</span><p>Premium users who start radio, Smart Shuffle or autoplay 2+ times a week. India, US, UK.</p></li>
+          <li><span>DESIGN</span><p>50/50 by user, 4 weeks, week 1 read apart for novelty.</p></li>
+          <li><span>SAMPLE</span><p>~6.5K per arm for the North Star; <b>~200K per arm for the churn guardrail</b>, so we size for churn.</p></li>
+          <li><span>GUARDRAILS</span><p>Listening time (no drop past −1%), Premium churn, nudge dismissals, crashes.</p></li>
+          <li><span>ROLLOUT</span><p>Dogfood 2 wks → 1% canary → A/B → launch with a 5% holdout for 3 months.</p></li>
+        </ul>
+        <p class="note">Business targets are deliberately small: +0.5–1% DAU and −5% relative churn are big wins at Spotify’s scale.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 RISKS -->
+<section id="risks">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">05 · Risks and what I’d do first</span>
+    <h2>What could go wrong, and what I’d learn in 30 days</h2>
+    <div class="risks">
+      <div>
+        <div class="risk"><div><b>Novelty spike</b>Coach looks great in week 1, then fades.</div><span class="ar">→</span><div>Read week 1 apart; decide on weeks 2–4.</div></div>
+        <div class="risk"><div><b>Lean-back users ignore it</b>Chips add effort for people who want none.</div><span class="ar">→</span><div>Smart defaults; Coach only speaks after a skip pattern.</div></div>
+        <div class="risk"><div><b>“New” hurts listening time</b>Unfamiliar songs can end sessions early.</div><span class="ar">→</span><div>Listening time is a guardrail; the dial lets users pull back.</div></div>
+        <div class="risk"><div><b>Reasons feel creepy or wrong</b>A bad “why” erodes trust faster than no why.</div><span class="ar">→</span><div>Why this song stays P1; reason quality checked in canary.</div></div>
+        <p class="honest"><b>Honest limits:</b> one listener’s screens, 51 negative-skewed reviews and an illustrative funnel. The direction is evidence-based; the numbers are assumptions until measured.</p>
+      </div>
+      <div class="plan">
+        <span class="label">First 30 days with real data</span>
+        <ul>
+          <li><b>01</b><div><strong>Measure freshness by surface</strong><span>Radio, Smart Shuffle and autoplay: where does the leak really sit?</span></div></li>
+          <li><b>02</b><div><strong>Interview 8–10 listeners</strong><span>Do Explorers exist at the size I assume?</span></div></li>
+          <li><b>03</b><div><strong>Re-score RICE</strong><span>Swap assumed reach and effort for real numbers.</span></div></li>
+          <li><b>04</b><div><strong>Prototype the intent check-in</strong><span>Five Explorers, one clickable radio, before any model work.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSE -->
+<section class="close">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--green)">The takeaway</span>
+    <h2>Spotify doesn’t need another AI that makes playlists</h2>
+    <p class="take">It needs the radio to listen. Disagree with a score or a cut? That’s the conversation I’d like to have.</p>
+    <div class="contact" id="contact">
+      <div>
+        <span class="label">Made by</span>
+        <p class="who-name">Jyotiraditya Bordoloi</p>
+        <p class="who-role">Product thinking, from teardown to experiment. Open to PM roles.</p>
+      </div>
+      <div class="ctas">
+        <a class="btn green" href="mailto:jyotiraditybordoloi@gmail.com?subject=Your%20Spotify%20case%20study">Email me</a>
+        <a class="btn line-w" href="https://www.linkedin.com/in/jyotiraditya-bordoloi-721879237/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+      </div>
+    </div>
+    <p class="more"><a href="Spotify_Teardown_Playlist_Coach.pdf" download>Download the 14-slide deck</a><span>·</span><a href="full.html">Read the full teardown</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">© 2026 Jyotiraditya Bordoloi · <a href="https://www.linkedin.com/in/jyotiraditya-bordoloi-721879237/" target="_blank" rel="noopener">LinkedIn</a>. An independent product case study, not affiliated with or endorsed by Spotify. Screenshots are from my own account; mockup names are invented.</div>
+</footer>
+</body>
+</html>

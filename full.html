@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full Teardown · Does Spotify Listen to You?</title>
+<meta name="author" content="Jyotiraditya Bordoloi">
+<meta name="description" content="An independent product teardown of how Spotify helps you find new music, and a proposed AI feature, Playlist Coach, that lets you steer the radio you already started.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Does Spotify Listen to You? A Product Teardown">
+<meta property="og:description" content="Great at replay, weak at steering discovery. A teardown on real screens, and an AI fix called Playlist Coach.">
+<meta property="og:image" content="img/share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1ED760">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23121212'/%3E%3Cpath d='M20 40V24l14 8z' fill='%231ED760'/%3E%3Crect x='38' y='22' width='6' height='20' rx='2' fill='%23FF4FA3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1ED760; --ink:#121212; --ink2:#1c1c1c; --pink:#FF4FA3; --yellow:#FFD23F;
+  --lav:#C5B4F2; --blue:#2D46B9; --orange:#FF6437; --paper:#FFFFFF; --soft:#F1F1F1;
+  --muted:#5a5a5a; --muted-d:#a8a8a8;
+  --head:"Archivo Black", "Arial Black", Arial, sans-serif;
+  --body:Inter, Arial, sans-serif;
+  --serif:Newsreader, Cambria, Georgia, serif;
+  --r:16px; --gut:clamp(16px,4vw,48px); --max:1200px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:var(--body);color:var(--ink);background:var(--paper);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%;height:auto}
+a{color:inherit}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut)}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;z-index:100}
+.skip:focus{left:8px}
+:focus-visible{outline:3px solid var(--pink);outline-offset:3px;border-radius:4px}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(18,18,18,.92);backdrop-filter:blur(10px);color:#fff}
+.nav .wrap{display:flex;align-items:center;gap:24px;height:56px}
+.brand{font-weight:700;font-size:15px;text-decoration:none;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brand i{width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block}
+.nav ul{display:flex;gap:4px;list-style:none;margin-left:auto}
+.nav ul a{font-size:14px;text-decoration:none;color:#cfcfcf;padding:8px 10px;border-radius:8px;transition:color .15s,background .15s}
+.nav ul a:hover{color:#fff;background:rgba(255,255,255,.08)}
+.btn{display:inline-flex;align-items:center;gap:0;font-weight:600;font-size:15px;text-decoration:none;padding:11px 18px;border-radius:999px;background:var(--green);color:var(--ink);border:0;cursor:pointer;transition:transform .15s,background .15s;white-space:nowrap;min-height:44px}
+.btn:hover{transform:translateY(-1px);background:#3be477}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.dark:hover{background:#2a2a2a}
+.btn.ghost{background:transparent;border:2px solid currentColor}
+.nav .btn{padding:8px 14px;font-size:14px;min-height:40px}
+
+/* sections */
+section{padding:clamp(72px,10vw,120px) 0}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px;display:block}
+h1,h2{font-family:var(--head);font-weight:400;letter-spacing:-.01em;line-height:1.02}
+h2{font-size:clamp(34px,5vw,58px);margin-bottom:20px;max-width:18ch}
+h3{font-size:20px;line-height:1.25;margin-bottom:6px}
+.lede{font-size:clamp(18px,2vw,21px);max-width:62ch;margin-bottom:48px}
+.serif{font-family:var(--serif);font-style:italic;font-weight:400}
+.label{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;display:block}
+.dark{background:var(--ink);color:#fff}
+.dark .lede,.dark .sub{color:#cfcfcf}
+.s-green{background:var(--green)}
+.s-blue{background:var(--blue);color:#fff}
+.s-yellow{background:var(--yellow)}
+.s-lav{background:var(--lav)}
+.sub{color:var(--muted);font-size:15px}
+.note{font-size:13px;color:var(--muted);margin-top:18px}
+.dark .note{color:var(--muted-d)}
+.grid{display:grid;gap:24px}
+.card{background:#fff;color:var(--ink);border-radius:var(--r);padding:24px;transition:transform .2s,box-shadow .2s}
+.card.hov:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.dcard{background:#202020;border-radius:var(--r);padding:24px}
+.num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--pink);color:#fff;font-weight:700;font-size:14px;border:2px solid #fff;flex:none}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--ink);color:#fff}
+
+/* phone frames */
+.phone{position:relative;background:#0b0b0b;border-radius:34px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.phone img{border-radius:26px;width:100%}
+.phone .mk{position:absolute;transform:translate(-50%,-50%)}
+.phone .mk.ring{width:34px;height:34px}
+
+/* hero */
+.hero{background:var(--green);padding:clamp(56px,8vw,96px) 0 clamp(64px,8vw,96px);overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(52px,8.4vw,108px);margin-bottom:24px}
+.hero .serif{font-size:clamp(21px,2.4vw,28px);line-height:1.3;max-width:30ch;margin-bottom:36px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:36px}
+.trio div{border-top:2px solid var(--ink);padding-top:12px}
+.trio b{display:block;font-size:16px;line-height:1.3;margin-top:4px}
+.trio .label{margin:0;font-size:11px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.hero-art{position:relative;height:clamp(420px,46vw,600px)}
+.hero-art .blob{position:absolute;right:-12%;top:6%;width:88%;aspect-ratio:1;border-radius:50%;background:var(--pink)}
+.hero-art .phone{position:absolute;width:52%}
+.hero-art .p1{left:4%;top:0;transform:rotate(-4deg);z-index:2}
+.hero-art .p2{right:0;top:9%;transform:rotate(5deg)}
+.burst{position:absolute;left:-4%;bottom:6%;z-index:3;width:120px;height:120px;display:grid;place-items:center;text-align:center;font-weight:800;font-size:17px;line-height:1.05;transform:rotate(-10deg)}
+.burst svg{position:absolute;inset:0}
+.burst span{position:relative}
+[data-enter]>*{animation:enter .8s cubic-bezier(.2,.7,.2,1) both}
+[data-enter]>*:nth-child(2){animation-delay:.12s}
+@keyframes enter{from{opacity:0;transform:translateY(18px)}}
+.hero-art .phone{animation:float-in .9s .25s cubic-bezier(.2,.7,.2,1) both}
+.hero-art .p2{animation-delay:.4s}
+@keyframes float-in{from{opacity:0;translate:0 40px}}
+
+/* context */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:12px}
+.stat b{font-family:var(--head);font-weight:400;font-size:clamp(48px,6vw,76px);line-height:1;display:block}
+.stat span{color:#cfcfcf}
+.ctx{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:start}
+.timeline{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:28px 0 40px}
+.timeline:before{content:"";position:absolute;left:10px;right:10px;top:43px;height:2px;background:#444}
+.timeline b{font-size:20px;display:block;margin-bottom:12px}
+.timeline i{display:block;width:20px;height:20px;border-radius:50%;background:var(--green);margin-bottom:12px;position:relative}
+.timeline span{color:#cfcfcf;font-size:15px;line-height:1.35;display:block}
+.punch{font-size:clamp(24px,2.6vw,30px);line-height:1.25}
+.punch strong{display:block;font-family:var(--head);font-weight:400;color:var(--pink);font-style:normal;font-size:clamp(22px,2.4vw,28px);margin-top:8px}
+.ctx-media{display:grid;grid-template-columns:.8fr 1.2fr;gap:20px}
+.ctx-media img{border-radius:12px}
+.ctx-media .scope{grid-column:1/-1}
+.scope .label{color:var(--pink)}
+.scope p{font-size:18px;font-weight:600;line-height:1.35;margin-bottom:10px}
+
+/* personas */
+.seg{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:start}
+.map{display:grid;grid-template-columns:1fr 1fr;gap:16px;position:relative}
+.map .card h3{font-family:var(--head);font-weight:400;font-size:24px}
+.map .card p{font-size:15px;line-height:1.4;margin-top:6px}
+.map .card .label{margin-bottom:6px;font-size:11px}
+.map .q-lav{background:var(--lav)}
+.map .q-yel{background:var(--yellow)}
+.map .q-out{background:transparent;color:#fff;border:2px dashed rgba(255,255,255,.6)}
+.axis{display:flex;justify-content:space-between;font-size:12px;font-weight:700;letter-spacing:.18em;color:#d6dcff;margin-top:12px}
+.axis-up{font-size:12px;font-weight:700;letter-spacing:.18em;color:#d6dcff;margin-bottom:12px}
+.persona{display:grid;grid-template-columns:1fr 1.3fr;gap:24px;padding:28px;border-radius:var(--r);margin-bottom:20px;color:var(--ink)}
+.persona h3{font-family:var(--head);font-weight:400;font-size:28px;margin:4px 0}
+.persona .who{color:#3a3a3a;font-size:15px}
+.persona ul{list-style:none;font-size:16px}
+.persona li{margin-bottom:8px}
+.persona blockquote{grid-column:1/-1;font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.3;border-top:1px solid rgba(0,0,0,.15);padding-top:14px}
+.seen{display:flex;gap:18px;align-items:center;margin-top:28px}
+.seen img{width:42%;border-radius:10px;flex:none}
+.seen .label{color:var(--yellow)}
+
+/* journey */
+.jwrap{overflow-x:auto;margin:0 calc(var(--gut) * -1);padding:0 var(--gut) 12px}
+.journey{min-width:1060px;display:grid;grid-template-columns:120px repeat(7,1fr);column-gap:16px;row-gap:22px;align-items:center}
+.journey .rl{font-size:12px;font-weight:700;letter-spacing:.18em;color:var(--muted)}
+.jstage{font-weight:700;font-size:17px}
+.jstage em{font-style:normal;color:var(--pink);margin-right:6px}
+.jscreen{background:#121212;border-radius:14px;height:210px;overflow:hidden;color:#fff;font-size:13px;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:14px}
+.jscreen.img{padding:0;justify-content:flex-start}
+.jscreen.img img{width:100%;height:100%;object-fit:cover;object-position:top}
+.jscreen .label{color:#bbb;font-size:10px;margin:0 0 4px}
+.known{display:flex;align-items:center;gap:8px}
+.known i{width:16px;height:16px;border-radius:3px;display:inline-block}
+.known b{margin-left:auto;color:var(--green)}
+.skip-btn{border:1px solid #444;border-radius:999px;padding:6px 0;text-align:center;font-weight:700;background:#1d1d1d}
+.leave{background:#fff;color:var(--ink);border-radius:999px;padding:6px 0;text-align:center;font-weight:700}
+.jscreen .pk{color:var(--pink);font-weight:600;text-align:center}
+.feel{grid-column:2/-1;position:relative;height:150px}
+.feel svg{position:absolute;inset:0;width:100%;height:100%}
+.feel .pt{position:absolute;transform:translate(-50%,-11px);text-align:center;font-size:13px;color:var(--muted)}
+.feel .pt i{display:block;width:22px;height:22px;border-radius:50%;margin:0 auto 4px}
+.feel .lose{position:absolute;left:61%;top:-6px;font-family:var(--serif);font-style:italic;color:var(--pink);font-size:19px;white-space:nowrap}
+.jq{font-family:var(--serif);font-style:italic;font-size:17px;line-height:1.3}
+.chip{border-radius:999px;padding:9px 0;text-align:center;font-weight:700;font-size:14px;background:var(--green)}
+.chip.off{background:#eee;color:#666;font-weight:600}
+.jfoot{font-family:var(--serif);font-style:italic;font-size:clamp(20px,2.2vw,24px);margin-top:28px}
+.jfoot b{color:var(--pink);font-weight:500}
+
+/* teardown */
+.td{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:28px;align-items:start}
+.td .phone{width:100%}
+.td .cap{font-size:12px;font-weight:700;letter-spacing:.18em;margin-bottom:14px;color:var(--muted-d)}
+.find{display:flex;gap:14px;margin-bottom:22px}
+.find h3{font-size:19px}
+.find p{font-size:15px;color:#cfcfcf;line-height:1.45}
+.s-yellow .find p{color:#2a2a2a}
+.wb{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.wb div{border-radius:12px;padding:16px 18px;font-size:15px}
+.wb b{letter-spacing:.18em;font-size:12px;display:block;margin-bottom:6px}
+.works{background:#16301f}.works b{color:var(--green)}
+.breaks{background:#3d1a2c}.breaks b{color:var(--pink)}
+.promise{display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;margin-top:28px;background:#1d1d1d;border-radius:var(--r);padding:20px}
+.promise img{border-radius:10px}
+.promise p{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.35}
+.promise strong{color:var(--pink);font-family:var(--body);font-style:normal;display:block;margin-top:6px;font-size:18px}
+.td2{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:28px;align-items:start}
+.td2 .cap{color:#3a3a3a}
+.verdict{background:var(--ink);color:#fff;border-radius:12px;padding:22px 24px;font-weight:700;font-size:20px;line-height:1.3;margin-top:12px;transform:rotate(-1deg)}
+.verdict span{color:var(--green);letter-spacing:.2em;font-size:12px;display:block;margin-bottom:6px}
+.desk{display:flex;gap:14px;align-items:center;margin-bottom:22px}
+.desk img{width:46%;border-radius:10px;flex:none;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+
+/* funnel */
+.fun{display:grid;grid-template-columns:1fr 1fr;gap:56px}
+.bars{display:grid;grid-template-columns:auto 1fr;gap:12px 16px;align-items:center;margin-bottom:28px}
+.bars span{font-size:15px;text-align:right}
+.bar{height:36px;background:var(--ink);border-radius:4px;position:relative;min-width:6px}
+.bar.hot{background:var(--pink)}
+.bar b{position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);font-size:15px}
+.drop{font-family:var(--serif);font-style:italic;color:var(--pink);font-size:19px;margin:-8px 0 28px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.why b{font-family:var(--head);font-weight:400;font-size:44px;line-height:1;display:block;margin-bottom:6px}
+.why b.p{color:var(--pink)}
+.why span{font-size:14px;line-height:1.4;display:block}
+table{width:100%;border-collapse:collapse}
+.mt th{font-size:12px;letter-spacing:.18em;text-transform:uppercase;text-align:left;padding:0 10px 12px 0;color:#444}
+.mt td{border-top:1px solid #ddd;padding:14px 10px 14px 0;vertical-align:top;font-size:15px}
+.mt td:first-child{font-weight:700;white-space:nowrap}
+.mt td:first-child em{color:var(--pink);font-style:normal;margin-right:6px}
+.mt td:nth-child(2){font-weight:700}
+.mt .hot{color:var(--pink)}
+.north{background:var(--green);border-radius:var(--r);padding:24px;margin-top:24px}
+.north b{font-family:var(--head);font-weight:400;font-size:26px;line-height:1.1;display:block;margin:4px 0 6px}
+
+/* competition */
+.comp{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.plane{position:relative;aspect-ratio:1/1;max-width:540px;width:100%}
+.plane:before{content:"";position:absolute;left:50%;top:6%;bottom:6%;width:2px;background:var(--ink)}
+.plane:after{content:"";position:absolute;top:50%;left:0;right:0;height:2px;background:var(--ink)}
+.ax{position:absolute;font-size:11px;font-weight:700;letter-spacing:.16em;white-space:nowrap}
+.ax.t{top:0;left:50%;transform:translateX(-50%)}
+.ax.b{bottom:0;left:50%;transform:translateX(-50%)}
+.ax.l{left:0;top:calc(50% + 10px)}
+.ax.r{right:0;top:calc(50% + 10px)}
+.pt2{position:absolute;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:8px 12px;font-size:13px;text-align:center;line-height:1.25;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.pt2 b{display:block;font-size:11px;letter-spacing:.12em}
+.pt2.sp{outline:3px solid var(--green)}
+.pt2.coach{background:var(--ink);color:#fff;outline:3px solid var(--pink);outline-offset:4px}
+.pt2.coach b{color:var(--green)}
+.legend{font-size:13px;margin-top:10px;display:flex;align-items:center;gap:8px}
+.legend i{width:26px;height:14px;border-radius:8px;outline:3px solid var(--green);background:#fff}
+.rows .card{display:grid;grid-template-columns:110px 1fr 1fr;gap:16px;margin-bottom:14px;font-size:15px;align-items:center}
+.rows .card h3{font-size:18px;margin:0}
+.rows .card p:last-child{font-weight:700}
+.rows .hd{display:grid;grid-template-columns:110px 1fr 1fr;gap:16px;padding:0 24px 10px;font-size:12px;font-weight:700;letter-spacing:.16em}
+.white{background:var(--ink);color:#fff;border-radius:var(--r);padding:22px 24px;font-weight:700;font-size:19px;margin-top:8px}
+.white span{color:var(--green);letter-spacing:.2em;font-size:12px;margin-right:10px}
+
+/* pain */
+.pain{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px}
+.rbars{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center}
+.rbars span{font-size:14px;color:#cfcfcf;text-align:right}
+.rbars .bar{height:26px;background:#4a4a4a}
+.rbars .bar.hot{background:var(--pink)}
+.quote{display:flex;gap:14px;margin-top:36px}
+.quote:before{content:"\201C";font-family:var(--serif);font-size:72px;line-height:.8;color:var(--pink)}
+.quote p{font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.35}
+.quote small{display:block;color:var(--muted-d);font-size:13px;margin-top:10px;font-family:var(--body);font-style:normal}
+.hmw{list-style:none}
+.hmw li{display:grid;grid-template-columns:52px 1fr 24px 1fr;gap:12px;border-top:1px solid #333;padding:16px 0;align-items:start}
+.hmw .n{font-family:var(--head);color:var(--pink);font-size:24px;line-height:1}
+.hmw h3{font-size:18px;margin-bottom:2px}
+.hmw small{color:var(--muted-d);font-size:13px}
+.hmw .ar{color:var(--green);font-weight:700}
+.hmw .q{font-size:16px}
+.hmw-h{display:grid;grid-template-columns:52px 1fr 24px 1fr;gap:12px;font-size:12px;font-weight:700;letter-spacing:.18em;color:var(--muted-d);padding-bottom:10px}
+
+/* rice */
+.rice{display:grid;grid-template-columns:1fr 300px;gap:40px;align-items:start}
+.tscroll{overflow-x:auto}
+.rt{min-width:760px}
+.rt th{font-size:11px;letter-spacing:.16em;text-align:left;padding:0 8px 12px 0;color:#444;text-transform:uppercase;font-weight:700}
+.rt td{border-top:1px solid #e3e3e3;padding:12px 8px 12px 0;font-size:16px;vertical-align:middle}
+.rt td:first-child b{display:block}
+.rt td:first-child small{color:var(--muted);font-size:13px}
+.rt .fx{color:var(--pink);font-weight:600}
+.score{display:flex;align-items:center;gap:8px;font-weight:700}
+.score i{height:22px;background:var(--green);display:block;border-radius:2px}
+.score i.y{background:var(--yellow)}.score i.g{background:#cfcfcf}
+.rt tr.cut td{border-top:3px dashed var(--pink)}
+.call{display:inline-block;padding:5px 12px;border-radius:999px;font-weight:700;font-size:13px;background:var(--ink);color:#fff}
+.call.l{background:#eee;color:#555}
+.sticky-note{background:var(--pink);padding:22px;transform:rotate(2deg);box-shadow:0 10px 24px rgba(0,0,0,.18);margin-bottom:28px;font-weight:700;font-size:18px;line-height:1.3}
+.side{background:var(--soft);border-radius:var(--r);padding:22px}
+.side p{font-size:16px;margin-bottom:10px}
+.side .big{font-family:var(--head);color:var(--pink);font-size:36px;line-height:1}
+
+/* solution */
+.sol{display:grid;grid-template-columns:.75fr 1fr 1fr 1.25fr;gap:24px;align-items:start}
+.sol .cap{font-size:12px;font-weight:700;letter-spacing:.18em;margin-bottom:14px}
+.mock{background:var(--ink);color:#fff;border-radius:30px;padding:18px 16px 22px;font-size:13px;position:relative;box-shadow:0 20px 40px rgba(0,0,0,.25)}
+.mock .top{text-align:center;color:#aaa;font-size:12px;margin-bottom:14px}
+.art{aspect-ratio:1;border-radius:6px;display:grid;place-items:center;margin:0 auto 10px;width:62%}
+.mock h4{font-size:18px;text-align:center}
+.mock .by{text-align:center;color:#aaa;font-size:12px;margin-bottom:14px}
+.ask{text-align:center;font-weight:700;margin-bottom:10px}
+.chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.chips span{border-radius:999px;padding:6px 12px;background:#2a2a2a;font-weight:700}
+.chips span.on{background:var(--green);color:var(--ink)}
+.dial{display:flex;align-items:center;gap:8px;color:#aaa;font-size:12px;margin-bottom:14px}
+.dial div{flex:1;height:4px;background:#333;border-radius:2px;position:relative}
+.dial div:before{content:"";position:absolute;left:0;top:0;bottom:0;width:72%;background:var(--green);border-radius:2px}
+.dial div:after{content:"";position:absolute;left:72%;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
+.up{display:flex;gap:10px;align-items:center;margin-top:10px}
+.up i{width:44px;height:44px;border-radius:4px;flex:none}
+.up b{display:block;font-size:14px}
+.up small{color:var(--green);font-size:12px}
+.np{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.np i{width:76px;height:76px;background:var(--orange);border-radius:4px;flex:none}
+.prog{height:3px;background:#333;margin-bottom:14px;border-radius:2px}
+.prog:before{content:"";display:block;width:35%;height:100%;background:#fff}
+.box{border-radius:12px;padding:12px;margin-bottom:10px;background:#242424}
+.box.coach{border:2px solid var(--green);background:#16301f}
+.box .label{font-size:10px;margin-bottom:6px;color:var(--green)}
+.box .acts{display:flex;gap:8px;margin-top:10px}
+.box .acts span{border-radius:999px;padding:6px 12px;font-weight:700;background:var(--green);color:var(--ink)}
+.box .acts span.no{background:transparent;border:1px solid #fff;color:#fff}
+.box u{color:var(--green);text-decoration:none;font-weight:700}
+.mock .mk{position:absolute;right:-14px}
+.feat{display:flex;gap:14px;margin-bottom:20px}
+.feat .num{background:var(--ink);border-color:var(--ink)}
+.feat h3{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:19px}
+.feat p{font-size:15px}
+.feat .pill.p1{background:#fff;color:var(--ink)}
+.today img{border-radius:22px}
+.today .phone{padding:8px}
+.today .phone img{aspect-ratio:9/15;object-fit:cover;object-position:top}
+
+/* experiment */
+.hyp{font-size:clamp(19px,2vw,23px);line-height:1.4;max-width:60ch;margin-bottom:36px}
+.exp{display:grid;grid-template-columns:1fr 320px;gap:40px}
+.cards6{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.cards6 .card .label{color:var(--blue)}
+.cards6 .card p{font-size:15px}
+.cards6 small{display:block;color:var(--muted);font-size:13px;margin-top:6px}
+.roll{list-style:none;position:relative}
+.roll:before{content:"";position:absolute;left:11px;top:12px;bottom:30px;width:2px;background:rgba(255,255,255,.5)}
+.roll li{display:flex;gap:16px;margin-bottom:24px;position:relative}
+.roll i{width:24px;height:24px;border-radius:50%;background:var(--yellow);flex:none}
+.roll i.g{background:var(--green)}
+.roll b{display:block;font-size:17px}
+.roll span{color:#d6dcff;font-size:15px}
+.risks{background:var(--yellow);color:var(--ink);padding:22px;transform:rotate(-1.5deg);box-shadow:0 10px 24px rgba(0,0,0,.25);font-size:15px}
+.risks p{margin-bottom:6px}
+.s-blue .label.y{color:var(--yellow)}
+
+/* success */
+.succ{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:start}
+.tree{display:grid;gap:14px}
+.tree .row{display:grid;gap:14px}
+.tree .r3{grid-template-columns:repeat(3,1fr)}
+.tree .r4{grid-template-columns:repeat(4,1fr)}
+.node{border:2px solid #fff;border-radius:12px;padding:12px;text-align:center;font-weight:700;font-size:16px}
+.node small{display:block;font-weight:400;color:#bbb;font-size:12px}
+.node.top{background:#fff;color:var(--ink);width:60%;margin:0 auto}
+.node.top small{color:#666}
+.node.ns{background:var(--green);border-color:var(--green);color:var(--ink);width:70%;margin:0 auto;font-size:19px}
+.node.ns small{color:#123}
+.node.dr{background:var(--lav);border-color:var(--lav);color:var(--ink)}
+.node.dr small{color:#333}
+.link{width:2px;height:16px;background:#555;margin:-6px auto}
+.lie{display:flex;gap:16px;background:#232323;border-radius:var(--r);padding:20px;margin-top:24px}
+.lie b{width:36px;height:36px;border-radius:50%;background:var(--pink);display:grid;place-items:center;flex:none;font-size:20px}
+.lie h3{font-family:var(--serif);font-style:italic;font-weight:400;font-size:22px}
+.lie p{color:#cfcfcf;font-size:15px}
+.st th{font-size:12px;letter-spacing:.18em;text-align:left;color:#aaa;padding-bottom:12px;font-weight:700}
+.st th:last-child,.st td:last-child{text-align:right}
+.st td{border-top:1px solid #333;padding:12px 0;font-size:16px}
+.st td:nth-child(2){color:#aaa;font-size:14px}
+.st td:last-child{font-weight:700}
+.st tr.ns td{color:var(--green);font-weight:700}
+.take{background:var(--green);color:var(--ink);padding:22px 24px;font-weight:700;font-size:21px;line-height:1.3;margin-top:28px;transform:rotate(-1deg)}
+.take span{letter-spacing:.2em;font-size:12px;display:block;margin-bottom:6px}
+
+/* limits */
+.lim{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.limit{display:flex;gap:14px;margin-bottom:24px}
+.limit p{font-size:16px;color:#2a2a2a}
+.next{background:var(--ink);color:#fff;border-radius:var(--r);padding:28px}
+.next .label{color:var(--green)}
+.next li{display:grid;grid-template-columns:44px 1fr;gap:6px;margin-bottom:18px;list-style:none}
+.next li b{font-family:var(--head);color:var(--pink);font-size:20px}
+.next li strong{display:block;font-size:17px}
+.next li span{color:#b3b3b3;font-size:15px}
+.src{font-size:14px;color:#3a3a3a;margin-top:28px}
+.ask2{font-family:var(--serif);font-style:italic;font-size:26px;margin-top:24px}
+
+footer{background:var(--ink);color:#bdbdbd;padding:40px 0;font-size:14px}
+footer .wrap{display:flex;gap:24px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+footer a{color:#fff}
+
+/* responsive */
+@media (max-width:1080px){
+  .nav ul{display:none}
+  .nav .btn{margin-left:auto}
+  .td,.td2{grid-template-columns:1fr 1fr}
+  .td .finds,.td2 .finds{grid-column:1/-1;order:-1}
+  .sol{grid-template-columns:1fr 1fr}
+  .sol .today{display:none}
+  .sol .feats{grid-column:1/-1}
+  .rice,.exp{grid-template-columns:1fr}
+  .rice aside{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+}
+@media (max-width:860px){
+  body{font-size:16px}
+  .hero .wrap,.ctx,.seg,.fun,.comp,.pain,.succ,.lim{grid-template-columns:1fr}
+  .hero-art{height:520px;max-width:460px}
+  .persona{grid-template-columns:1fr}
+  .cards6{grid-template-columns:1fr 1fr}
+  .rows .card,.rows .hd{grid-template-columns:90px 1fr}
+  .rows .card p:last-child{grid-column:2}
+  .rows .hd span:last-child{display:none}
+}
+@media (max-width:560px){
+  .trio,.stats,.why{grid-template-columns:1fr}
+  .stats{gap:14px}
+  .timeline{grid-template-columns:1fr 1fr;row-gap:28px}
+  .timeline:before{display:none}
+  .map{grid-template-columns:1fr}
+  .td,.td2,.sol{grid-template-columns:1fr}
+  .td .phone,.td2 .phone{max-width:320px;margin:0 auto}
+  .wb,.cards6,.ctx-media{grid-template-columns:1fr}
+  .promise{grid-template-columns:1fr}
+  .promise img{max-width:200px}
+  .hmw li,.hmw-h{grid-template-columns:40px 1fr}
+  .hmw .ar{display:none}
+  .hmw .q{grid-column:2}
+  .hmw-h span:nth-child(n+3){display:none}
+  .rice aside{grid-template-columns:1fr}
+  .tree .r4{grid-template-columns:1fr 1fr}
+  .tree .r3{grid-template-columns:1fr}
+  .node.top,.node.ns{width:100%}
+  .seen{flex-direction:column;align-items:flex-start}
+  .seen img{width:100%}
+  .desk{flex-direction:column;align-items:flex-start}
+  .desk img{width:100%}
+  .hero .ctas .btn{width:100%;justify-content:center}
+  .hero-art{height:430px}
+  .plane .pt2{font-size:11px;padding:6px 8px}
+  .ax{font-size:9px}
+}
+.rice>*,.fun>*,.succ>*,.exp>*,.comp>*,.pain>*,.ctx>*,.seg>*,.lim>*,.td>*,.td2>*,.sol>*{min-width:0}
+@media (max-width:560px){
+  .brand .long{display:none}
+  .nav .wrap{gap:12px}
+  .nav .btn .long{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the case study</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html"><i></i>Playlist Coach<span class="long">&nbsp;· a Spotify teardown</span></a>
+    <ul>
+      <li><a href="#journey">Journey</a></li>
+      <li><a href="#teardown">Teardown</a></li>
+      <li><a href="#funnel">Data</a></li>
+      <li><a href="#solution">Solution</a></li>
+      <li><a href="#experiment">Experiment</a></li>
+      <li><a href="#limits">Limits</a></li>
+    </ul>
+    <a class="btn" href="Spotify_Teardown_Playlist_Coach.pdf" download>Download<span class="long">&nbsp;the deck</span>&nbsp;PDF</a>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- 1 HERO -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <div data-enter>
+      <div>
+        <span class="eyebrow">Product teardown · Spotify · Oct 2026</span>
+        <h1>Does Spotify listen to you?</h1>
+        <p class="serif">A teardown of how Spotify helps you find new music, and an AI fix called Playlist Coach.</p>
+        <div class="trio">
+          <div><span class="label">What I tore down</span><b>Home, playlists, radio and Library on Android</b></div>
+          <div><span class="label">What I found</span><b>Great at replay, weak at steering discovery</b></div>
+          <div><span class="label">What I propose</span><b>Playlist Coach: steer the radio you started</b></div>
+        </div>
+        <div class="ctas">
+          <a class="btn dark" href="#journey">Read the case study</a>
+          <a class="btn ghost" href="#solution">Jump to the solution</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="false">
+      <div class="blob"></div>
+      <div class="phone p1"><img src="img/home.jpg" alt="Spotify Home screen on Android: eight shortcuts to past listening and an autoplaying video" width="640" height="1459"></div>
+      <div class="phone p2"><img src="img/library.jpg" alt="Spotify Your Library screen sorted by Recents" width="640" height="1459" loading="lazy"></div>
+      <div class="burst" aria-hidden="true">
+        <svg viewBox="0 0 100 100"><polygon fill="#FFD23F" stroke="#121212" stroke-width="1.5" points="50,2 58,20 76,8 74,28 96,26 82,42 98,56 78,62 88,82 66,78 62,98 50,82 38,98 34,78 12,82 22,62 2,56 18,42 4,26 26,28 24,8 42,20"/></svg>
+        <span>Real<br>screens<br>inside</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 CONTEXT -->
+<section class="dark" id="context">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--green)">01 · Context</span>
+    <h2>Built to know you, at massive scale</h2>
+    <div class="ctx">
+      <div>
+        <div class="stats">
+          <div class="stat"><b style="color:var(--green)">788M</b><span>monthly active users</span></div>
+          <div class="stat"><b style="color:var(--pink)">306M</b><span>Premium subscribers</span></div>
+          <div class="stat"><b style="color:var(--yellow)">184</b><span>countries and territories</span></div>
+        </div>
+        <p class="note">Source: Spotify Q3 2026 results, 22 Oct 2026.</p>
+        <span class="label" style="margin-top:44px">Spotify’s AI discovery stack</span>
+        <div class="timeline">
+          <div><b>2015</b><i></i><span>Discover Weekly</span></div>
+          <div><b>2023</b><i></i><span>Smart Shuffle, AI DJ, daylist</span></div>
+          <div><b>2024</b><i></i><span>AI Playlist</span></div>
+          <div><b>2025–26</b><i></i><span>Prompted Playlist, Taste Profile (betas)</span></div>
+        </div>
+        <p class="punch serif">Every one of them makes music for you.<strong>None lets you steer the radio you already started.</strong></p>
+      </div>
+      <div class="ctx-media">
+        <img src="img/store.jpg" alt="Spotify’s Play Store listing, leading with Discover Weekly, DJ and daylist" width="333" height="592" loading="lazy">
+        <div>
+          <img src="img/desktop.jpg" alt="Spotify desktop app with the Now Playing panel showing artist context" width="526" height="296" loading="lazy">
+          <p class="note">Left: the Play Store listing puts Discover Weekly, DJ and daylist up front. Above: desktop’s Now Playing adds artist context.</p>
+        </div>
+        <div class="dcard scope">
+          <span class="label">Teardown scope</span>
+          <p>Android app, one real listener in India, Oct 2026.</p>
+          <p>Focus: how new music gets found, from Home to radio to Library.</p>
+          <p class="sub" style="color:#a8a8a8">6 screens: 4 phone, 1 desktop, 1 store listing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 SEGMENTS -->
+<section class="s-blue" id="users">
+  <div class="wrap">
+    <span class="eyebrow" style="color:#d6dcff">02 · User segments · proto-personas from secondary research</span>
+    <h2>Four listeners, one algorithm</h2>
+    <div class="seg">
+      <div>
+        <div class="axis-up">↑ MORE NEW MUSIC</div>
+        <div class="map">
+          <div class="card"><span class="label">Rahul · tertiary</span><h3>The Lean-back</h3><p>Wants fresh music with zero effort.</p><p><b>Coach must:</b> work with zero taps.</p></div>
+          <div class="card q-lav"><span class="label">Arjun · primary</span><h3>The Explorer</h3><p>Hunts new artists through Song Radio.</p><p><b>Coach must:</b> find new artists that fit.</p></div>
+          <div class="card q-out"><span class="label">Not our target</span><h3>The Loyalist</h3><p>Happy living on On Repeat.</p><p><b>Coach must:</b> stay out of the way.</p></div>
+          <div class="card q-yel"><span class="label">Meera · secondary</span><h3>The Curator</h3><p>Builds mood playlists and guards the vibe.</p><p><b>Coach must:</b> keep the vibe, add a few.</p></div>
+        </div>
+        <div class="axis"><span>← LEAN-BACK</span><span>LEAN-IN →</span></div>
+        <div class="seen">
+          <img src="img/tiles.jpg" alt="Eight Home shortcuts mixing Assamese hits, Karan Aujla, Led Zeppelin and HUGEL" width="520" height="342" loading="lazy">
+          <div><span class="label">Seen on a real Home screen</span><p>Assamese hits, Karan Aujla, Led Zeppelin and HUGEL share eight tiles. One profile, many moods: the feed must read intent, not just history.</p></div>
+        </div>
+      </div>
+      <div>
+        <article class="persona" style="background:var(--lav)">
+          <div><span class="label">Arjun, 24 · primary</span><h3>The Explorer</h3><p class="who">Software engineer, Bengaluru · Premium 5 yrs</p></div>
+          <ul><li><b>Wants</b> to find new indie artists through Song Radio</li><li><b>Hates</b> that every radio drifts back to his Liked Songs</li></ul>
+          <blockquote>“I didn’t start a radio to hear my own playlist back.”</blockquote>
+        </article>
+        <article class="persona" style="background:var(--yellow)">
+          <div><span class="label">Meera, 29 · secondary</span><h3>The Curator</h3><p class="who">Product designer · 40 mood playlists</p></div>
+          <ul><li><b>Wants</b> the whole playlist with the vibe intact, plus a few new songs</li><li><b>Hates</b> that shuffle loops ~50 songs, and Smart Shuffle breaks the mood</li></ul>
+          <blockquote>“Either it ruins my playlist or I get nothing new.”</blockquote>
+        </article>
+        <article class="persona" style="background:#fff">
+          <div><span class="label">Rahul, 35 · tertiary</span><h3>The Lean-back</h3><p class="who">Sales manager · commute and gym</p></div>
+          <ul><li><b>Wants</b> music that just plays, zero effort</li><li><b>Hates</b> the same autoplay songs every single day</li></ul>
+          <blockquote>Coach has to work without him touching it.</blockquote>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 JOURNEY -->
+<section id="journey">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">03 · User journey, mapped on real screens</span>
+    <h2>The journey ends in replay, not discovery</h2>
+    <p class="lede">Arjun opens Spotify hoping for something new. Follow him through seven steps, and watch what the dashboard records at each one.</p>
+    <div class="jwrap" tabindex="0" aria-label="User journey table, scrolls sideways on small screens">
+      <div class="journey">
+        <span class="rl">STAGE</span>
+        <div class="jstage"><em>1</em>Open app</div>
+        <div class="jstage"><em>2</em>Scan Home</div>
+        <div class="jstage"><em>3</em>Pick a playlist</div>
+        <div class="jstage"><em>4</em>Let it play</div>
+        <div class="jstage"><em>5</em>Try to steer</div>
+        <div class="jstage"><em>6</em>Fall back</div>
+        <div class="jstage"><em>7</em>Leave</div>
+
+        <span class="rl">SCREEN</span>
+        <div class="jscreen img"><img src="img/j-home.jpg" alt="Home, first screen" width="360" height="513" loading="lazy"></div>
+        <div class="jscreen img"><img src="img/j-scroll.jpg" alt="Home after one scroll: stations and mixes" width="360" height="513" loading="lazy"></div>
+        <div class="jscreen img"><img src="img/j-playlist.jpg" alt="A playlist playing" width="360" height="513" loading="lazy"></div>
+        <div class="jscreen">
+          <span class="label">AUTOPLAY</span>
+          <div class="known"><i style="background:var(--lav)"></i>Known song<b>✓</b></div>
+          <div class="known"><i style="background:var(--orange)"></i>Known song<b>✓</b></div>
+          <div class="known"><i style="background:var(--yellow)"></i>Known song<b>✓</b></div>
+          <div class="known"><i style="background:#555"></i>Known song<b>✓</b></div>
+          <div class="pk" style="text-align:left">0 new songs</div>
+        </div>
+        <div class="jscreen"><div class="skip-btn">SKIP ›|</div><div class="skip-btn">SKIP ›|</div><div class="skip-btn">SKIP ›|</div><div class="pk">queue doesn’t change</div></div>
+        <div class="jscreen img"><img src="img/j-library.jpg" alt="Your Library, sorted by Recents" width="360" height="513" loading="lazy"></div>
+        <div class="jscreen"><div class="leave">Reels</div><div class="leave">YouTube</div><div class="leave">A friend’s link</div><div class="pk">discovers elsewhere</div></div>
+
+        <span class="rl">FEELING</span>
+        <div class="feel">
+          <svg viewBox="0 0 700 150" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#c9c9c9" stroke-width="2" stroke-dasharray="7 6" vector-effect="non-scaling-stroke" points="50,22 150,48 250,52 350,74 450,98 550,74 650,88"/></svg>
+          <span class="lose">this is where we lose him ↓</span>
+          <div class="pt" style="left:7.14%;top:22px"><i style="background:var(--green)"></i>hopeful</div>
+          <div class="pt" style="left:21.43%;top:48px"><i style="background:var(--green)"></i>meh</div>
+          <div class="pt" style="left:35.71%;top:52px"><i style="background:var(--yellow)"></i>okay</div>
+          <div class="pt" style="left:50%;top:74px"><i style="background:var(--orange)"></i>bored</div>
+          <div class="pt" style="left:64.29%;top:98px"><i style="background:var(--pink)"></i>annoyed</div>
+          <div class="pt" style="left:78.57%;top:74px"><i style="background:var(--orange)"></i>resigned</div>
+          <div class="pt" style="left:92.86%;top:88px"><i style="background:var(--pink)"></i>gone</div>
+        </div>
+
+        <span class="rl">HE THINKS</span>
+        <p class="jq">“Let me find something new.”</p>
+        <p class="jq">“All artists I already know.”</p>
+        <p class="jq">“Good songs. Heard them all.”</p>
+        <p class="jq">“Wait, I know these.”</p>
+        <p class="jq">“Skipping changes nothing.”</p>
+        <p class="jq">“Fine, my own playlist.”</p>
+        <p class="jq">“Spotify is for replay.”</p>
+
+        <span class="rl">DASHBOARD SEES</span>
+        <div class="chip">App open ✓</div>
+        <div class="chip">Home view ✓</div>
+        <div class="chip">Play ✓</div>
+        <div class="chip">30 min ✓</div>
+        <div class="chip off">3 skips</div>
+        <div class="chip">Replay ✓</div>
+        <div class="chip off">Session ends</div>
+      </div>
+    </div>
+    <p class="jfoot">The dashboard sees a healthy, engaged session. <b>Arjun found zero new songs.</b></p>
+  </div>
+</section>
+
+<!-- 5 HOME TEARDOWN -->
+<section class="dark" id="teardown">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--green)">04 · Product teardown · Home</span>
+    <h2>Home is a mirror, not a window</h2>
+    <div class="td">
+      <div>
+        <p class="cap">FIRST SCREEN</p>
+        <div class="phone">
+          <img src="img/home.jpg" alt="Spotify Home, first screen, with numbered findings" width="640" height="1459" loading="lazy">
+          <span class="num mk" style="left:92%;top:12%">1</span>
+          <span class="num mk" style="left:8%;top:54%">2</span>
+          <span class="num mk" style="left:44%;top:76%">3</span>
+        </div>
+      </div>
+      <div>
+        <p class="cap">AFTER ONE SCROLL</p>
+        <div class="phone">
+          <img src="img/home-scroll.jpg" alt="Spotify Home after one scroll, with numbered findings" width="640" height="1459" loading="lazy">
+          <span class="num mk" style="left:68%;top:5%">6</span>
+          <span class="num mk" style="left:92%;top:19%">4</span>
+          <span class="num mk" style="left:92%;top:50%">5</span>
+        </div>
+      </div>
+      <div class="finds">
+        <div class="find"><span class="num">1</span><div><h3>8 shortcuts, all from the past</h3><p>Liked Songs, Clapton, Zeppelin, Assamese hits, Karan Aujla. Fast to resume, nothing new.</p></div></div>
+        <div class="find"><span class="num">2</span><div><h3>A 2017 video autoplays</h3><p>“Videos from your top songs” fills about a quarter of the first screen with an old favourite.</p></div></div>
+        <div class="find"><span class="num">3</span><div><h3>Discovery sits below the fold</h3><p>No Discover Weekly, DJ or daylist anywhere in the first two screens.</p></div></div>
+        <div class="find"><span class="num">4</span><div><h3>Stations you can’t tune</h3><p>Radios are seeded from recent artists. No way to say “newer” before you press play.</p></div></div>
+        <div class="find"><span class="num">5</span><div><h3>Mixes built from what you play</h3><p>“Your top mixes” bring back Queen, Clapton and CCR, relabelled as moods.</p></div></div>
+        <div class="find"><span class="num">6</span><div><h3>Filters by format, not intent</h3><p>All, Music, Podcasts. Nothing for “new to me” or “focus”.</p></div></div>
+        <div class="promise">
+          <img src="img/store.jpg" alt="Play Store listing showing Discover Weekly, DJ and daylist in the first grid" width="333" height="592" loading="lazy">
+          <p>The store promise: Discover Weekly, DJ and daylist in the first grid.<strong>My first screen: none of them.</strong></p>
+        </div>
+      </div>
+    </div>
+    <div class="wb">
+      <div class="works"><b>WORKS</b>Fast resume · strong taste signals · clean hierarchy</div>
+      <div class="breaks"><b>BREAKS</b>Discovery buried · no intent input · autoplay takes the fold</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 LISTENING + LIBRARY -->
+<section class="s-yellow" id="library">
+  <div class="wrap">
+    <span class="eyebrow">05 · Product teardown · Listening + Library</span>
+    <h2>Playlist and Library are built for replay</h2>
+    <div class="td2">
+      <div class="finds">
+        <div class="find"><span class="num">1</span><div><h3>Already-saved songs</h3><p>Two of the first three tracks carry green ticks. The playlist plays what you already own.</p></div></div>
+        <div class="find"><span class="num">2</span><div><h3>One knob: shuffle</h3><p>The only way to change what plays. No “more like this” or “newer”.</p></div></div>
+        <div class="find"><span class="num">3</span><div><h3>No “not this” button</h3><p>The mini-player can save or switch device, but can’t say “not this” or “why this?”.</p></div></div>
+        <div class="find"><span class="num">4</span><div><h3>On Repeat is a product</h3><p>Spotify’s own playlist, named for repetition, sits in Recents.</p></div></div>
+        <div class="find"><span class="num">5</span><div><h3>Moods curated by hand</h3><p>“Mysleepingpills”: the listener builds the context Spotify can’t infer.</p></div></div>
+        <div class="find"><span class="num">6</span><div><h3>A Library that looks back</h3><p>Sorted by Recents, filtered by format. Nothing new lives here.</p></div></div>
+        <div class="desk">
+          <img src="img/desktop.jpg" alt="Spotify desktop Now Playing panel with About the artist" width="526" height="296" loading="lazy">
+          <div class="find" style="margin:0"><span class="num">7</span><div><h3>Context, but no reason</h3><p>Desktop shows “About the artist”. Nothing says why this track was picked for you.</p></div></div>
+        </div>
+        <div class="verdict"><span>VERDICT</span>World-class at replay and resume. Weak at letting you steer discovery.</div>
+      </div>
+      <div>
+        <p class="cap label">Playlist · now playing</p>
+        <div class="phone">
+          <img src="img/playlist.jpg" alt="A Spotify playlist playing, with numbered findings" width="640" height="1459" loading="lazy">
+          <span class="num mk" style="left:62%;top:51%">2</span>
+          <span class="num mk" style="left:64%;top:68%">1</span>
+          <span class="num mk" style="left:5%;top:83%">3</span>
+        </div>
+      </div>
+      <div>
+        <p class="cap label">Your Library</p>
+        <div class="phone">
+          <img src="img/library.jpg" alt="Spotify Your Library, with numbered findings" width="640" height="1459" loading="lazy">
+          <span class="num mk" style="left:92%;top:13%">6</span>
+          <span class="num mk" style="left:70%;top:65%">5</span>
+          <span class="num mk" style="left:70%;top:75%">4</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 FUNNEL -->
+<section id="funnel">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">06 · Funnel + metrics</span>
+    <h2>The funnel leaks where new songs should be</h2>
+    <div class="fun">
+      <div>
+        <span class="label">Discovery funnel · index per 100 app opens (illustrative)</span>
+        <div class="bars">
+          <span>Opens Spotify</span><div class="bar" style="width:86%"><b>100</b></div>
+          <span>Sees a discovery surface</span><div class="bar" style="width:47%"><b>55</b></div>
+          <span>Starts a discovery stream</span><div class="bar" style="width:26%"><b>30</b></div>
+          <span>Hears a new track (30s+)</span><div class="bar hot" style="width:8%"><b>9</b></div>
+          <span>Saves a new track</span><div class="bar" style="width:3.5%"><b>4</b></div>
+          <span>Replays it within 7 days</span><div class="bar" style="width:1.8%"><b>2</b></div>
+        </div>
+        <p class="drop">↑ 70% drop: streams start, but new songs rarely arrive.</p>
+        <span class="label">Why we think it leaks here</span>
+        <div class="why">
+          <div><b class="p">91%</b><span>of 1,067 poll voters hear the same few songs</span></div>
+          <div><b>56</b><span>songs into a radio before one new track</span></div>
+          <div><b>~5%</b><span>of one playlist radio was new and relevant</span></div>
+        </div>
+        <p class="note">Sources: Digital Music News poll; two Spotify Community posts (single listeners, not averages). The funnel is an index, not Spotify data.</p>
+      </div>
+      <div>
+        <div class="tscroll">
+        <table class="mt">
+          <thead><tr><th>Stage</th><th>Metric</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td><em>1</em>Opens</td><td>DAU</td><td>Users who open Spotify each day</td></tr>
+            <tr><td><em>2</em>Sees</td><td>Discovery exposure</td><td>Sessions with a discovery surface in view ÷ sessions</td></tr>
+            <tr><td><em>3</em>Starts</td><td>Discovery starts</td><td>Discovery streams started ÷ exposures</td></tr>
+            <tr><td><em>4</em>Hears</td><td class="hot">Freshness</td><td>New-to-you tracks heard 30s+ ÷ tracks played</td></tr>
+            <tr><td><em>5</em>Saves</td><td>New-track save rate</td><td>New tracks saved ÷ new tracks heard</td></tr>
+            <tr><td><em>6</em>Replays</td><td>7-day replay</td><td>Saved new tracks replayed within 7 days</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="north">
+          <span class="label" style="margin:0">North star</span>
+          <b>New-track saves per user, per week</b>
+          <span>It needs both halves: new songs reach you, and you keep them.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 COMPETITION -->
+<section class="s-lav" id="competition">
+  <div class="wrap">
+    <span class="eyebrow">07 · Competitive analysis</span>
+    <h2>Everyone generates. Nobody steers</h2>
+    <div class="comp">
+      <div>
+        <div class="plane" role="img" aria-label="Map of AI music features: most generate playlists as a black box; Playlist Coach sits alone in the explains-itself, steers-what’s-playing corner">
+          <span class="ax t">EXPLAINS ITSELF ↑</span>
+          <span class="ax b">BLACK BOX ↓</span>
+          <span class="ax l">← MAKES A PLAYLIST</span>
+          <span class="ax r">STEERS WHAT’S PLAYING →</span>
+          <div class="pt2 coach" style="left:75%;top:15%"><b>PLAYLIST COACH</b>track-level, with reasons</div>
+          <div class="pt2 sp" style="left:25%;top:27%"><b>Spotify</b>Taste Profile (beta)</div>
+          <div class="pt2" style="left:68%;top:34%"><b>Deezer</b>Flow Tuner</div>
+          <div class="pt2" style="left:24%;top:62%"><b>YouTube Music</b>AI Playlist</div>
+          <div class="pt2 sp" style="left:71%;top:62%"><b>Spotify</b>AI DJ requests</div>
+          <div class="pt2 sp" style="left:30%;top:76%"><b>Spotify</b>Prompted Playlist</div>
+          <div class="pt2" style="left:76%;top:79%"><b>YouTube Music</b>queue chips</div>
+          <div class="pt2" style="left:22%;top:90%"><b>Apple Music</b>Playlist Playground</div>
+        </div>
+        <p class="legend"><i></i>green outline = Spotify today</p>
+      </div>
+      <div class="rows">
+        <div class="hd"><span></span><span>WHAT THEY SHIP IN 2026</span><span>GAP COACH FILLS</span></div>
+        <div class="card hov"><h3>Spotify</h3><p>Prompted Playlist, AI DJ requests, Smart Shuffle, Taste Profile beta</p><p>Steering lives in DJ and prompts. Radio, shuffle and autoplay stay a black box.</p></div>
+        <div class="card hov"><h3>YouTube Music</h3><p>AI Playlist (Feb 2026); Familiar and Discover chips in the queue</p><p>Chips steer the queue, but never say why a track was picked.</p></div>
+        <div class="card hov"><h3>Apple Music</h3><p>Playlist Playground: prompt-made playlists (iOS 26.4)</p><p>Prompt-only. Nothing helps once the music is playing.</p></div>
+        <div class="card hov"><h3>Deezer</h3><p>Flow Tuner (Feb 2026): see and toggle the genres behind Flow</p><p>Genre-level, and only inside Flow.</p></div>
+        <div class="white"><span>WHITE SPACE</span>Track-level steering plus a reason, inside the stream you already started.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 PAIN POINTS -->
+<section class="dark" id="pain">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">08 · Pain points → opportunities</span>
+    <h2>Ads are louder. Repetition is the fixable pain</h2>
+    <div class="pain">
+      <div>
+        <span class="label">What 51 Play Store reviews complain about</span>
+        <div class="rbars">
+          <span>Free-tier limits</span><div class="bar" style="width:84%"></div>
+          <span>Too many ads</span><div class="bar" style="width:51%"></div>
+          <span style="color:#fff">Wrong / repetitive songs</span><div class="bar hot" style="width:27%"></div>
+          <span>Positive</span><div class="bar" style="width:18%"></div>
+          <span>App reliability</span><div class="bar" style="width:18%"></div>
+          <span style="color:#fff">Queue order ignored</span><div class="bar hot" style="width:15%"></div>
+          <span>Feature removal</span><div class="bar" style="width:6%"></div>
+          <span>Billing</span><div class="bar" style="width:6%"></div>
+        </div>
+        <p class="note">Counts: 28, 17, 9, 6, 6, 5, 2, 2. Pink = the ones AI can fix. Free-tier limits and ads are louder, but they are business-model choices, so out of scope here. n = 51; counts overlap; the sample skews negative and India-heavy.</p>
+        <div class="quote"><p>The algorithm is absolute trash, it plays the same songs over and over in the name of smart shuffle.<small>Play Store review, Aug 2026</small></p></div>
+      </div>
+      <div>
+        <div class="hmw-h"><span></span><span>PAIN POINT</span><span></span><span>HOW MIGHT WE…</span></div>
+        <ul class="hmw">
+          <li><span class="n">01</span><div><h3>Repetition</h3><small>Different seeds, same songs · 91% of poll voters</small></div><span class="ar">→</span><span class="q">keep radio fresh without losing the vibe?</span></li>
+          <li><span class="n">02</span><div><h3>Seed mismatch</h3><small>Next songs ignore your pick · reviews, Community</small></div><span class="ar">→</span><span class="q">make the seed song outweigh old history?</span></li>
+          <li><span class="n">03</span><div><h3>Broken feedback</h3><small>Removed songs come back · Community threads</small></div><span class="ar">→</span><span class="q">make every correction stick, visibly?</span></li>
+          <li><span class="n">04</span><div><h3>No steering</h3><small>Filters are format, not intent · Home ④ ⑥</small></div><span class="ar">→</span><span class="q">let listeners say what they want in one tap?</span></li>
+          <li><span class="n">05</span><div><h3>Black-box picks</h3><small>No “why this song” · Library ③ ⑦</small></div><span class="ar">→</span><span class="q">explain each pick in plain words?</span></li>
+          <li><span class="n">06</span><div><h3>Discovery buried</h3><small>Not in the first two screens · Home ③</small></div><span class="ar">→</span><span class="q">meet listeners where intent already is: the radio?</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 RICE -->
+<section id="rice">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--pink)">09 · Prioritization</span>
+    <h2>RICE picks the MVP</h2>
+    <div class="rice">
+      <div>
+        <div class="tscroll">
+        <table class="rt">
+          <thead><tr><th>Idea</th><th>Fixes</th><th>Reach</th><th>Impact</th><th>Conf.</th><th>Effort</th><th>RICE score</th><th>Call</th></tr></thead>
+          <tbody>
+            <tr><td><b>Feedback that sticks</b><small>Removed songs never return</small></td><td class="fx">03</td><td>80%</td><td>2</td><td>80%</td><td>3</td><td><div class="score"><i style="width:120px"></i>42.7</div></td><td><span class="call">P0</span></td></tr>
+            <tr><td><b>Intent check-in</b><small>New to me / Stay close / Mix</small></td><td class="fx">04</td><td>60%</td><td>2</td><td>70%</td><td>2</td><td><div class="score"><i style="width:118px"></i>42.0</div></td><td><span class="call">P0</span></td></tr>
+            <tr><td><b>Discovery dial</b><small>Familiar ↔ New, per session</small></td><td class="fx">01 02</td><td>50%</td><td>2</td><td>70%</td><td>2</td><td><div class="score"><i style="width:98px"></i>35.0</div></td><td><span class="call">P0</span></td></tr>
+            <tr><td><b>Live coaching</b><small>Spots skip patterns, offers a fix</small></td><td class="fx">01 03</td><td>50%</td><td>3</td><td>50%</td><td>3</td><td><div class="score"><i style="width:70px"></i>25.0</div></td><td><span class="call">P0</span></td></tr>
+            <tr><td><b>Why this song</b><small>A reason tied to your seed</small></td><td class="fx">05</td><td>70%</td><td>1</td><td>60%</td><td>3</td><td><div class="score"><i class="y" style="width:39px"></i>14.0</div></td><td><span class="call">P1</span></td></tr>
+            <tr class="cut"><td><b>Home discovery module</b><small>Discovery above the fold</small></td><td class="fx">06</td><td>90%</td><td>0.5</td><td>40%</td><td>2</td><td><div class="score"><i class="g" style="width:25px"></i>9.0</div></td><td><span class="call l">Later</span></td></tr>
+            <tr><td><b>Chat with your radio</b><small>Type or say what to change</small></td><td class="fx">04</td><td>30%</td><td>2</td><td>40%</td><td>5</td><td><div class="score"><i class="g" style="width:13px"></i>4.8</div></td><td><span class="call l">Later</span></td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="note">Dashed pink line = MVP cut. RICE = Reach × Impact × Confidence ÷ Effort. Reach = % of radio and autoplay users per quarter · Impact 0.5–3 · Confidence from evidence · Effort in person-months. All scores are assumptions to re-score with real data.</p>
+      </div>
+      <aside>
+        <div class="sticky-note"><span class="label" style="font-size:11px">Judgment call</span>Live coaching is the riskiest P0: 50% confidence. No rival has it, so it stays in.</div>
+        <div class="side">
+          <span class="label">Why not fix Home first?</span>
+          <p>Moving discovery up the Home screen raises reach, not quality. If radio still recycles songs, more people just find the loop faster.</p>
+          <p><b>So: fix the radio first, then promote it on Home in v2.</b></p>
+          <span class="label" style="margin-top:18px">MVP effort</span>
+          <p><span class="big">~13</span> <b style="color:var(--pink)">person-months</b><br><span class="sub">4 P0 features + 1 P1, by the scores above</span></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- 11 SOLUTION -->
+<section class="s-green" id="solution">
+  <div class="wrap">
+    <span class="eyebrow">10 · Proposed solution + mockup</span>
+    <h2>Playlist Coach: steer the radio you started</h2>
+    <div class="sol">
+      <div class="today">
+        <p class="cap">TODAY</p>
+        <div class="phone"><img src="img/playlist.jpg" alt="Today: a Spotify playlist where shuffle is the only control" width="640" height="1459" loading="lazy"></div>
+        <p class="serif" style="font-size:20px;margin-top:12px">One knob: shuffle.</p>
+      </div>
+      <div>
+        <p class="cap">WITH COACH · START</p>
+        <div class="mock">
+          <p class="top">Song radio · Coach on</p>
+          <div class="art" style="background:var(--yellow)"><svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true"><path fill="#121212" d="M9 17.5a2.5 2.5 0 1 1-2.5-2.5c.36 0 .7.08 1 .21V5l12-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.36 0 .7.08 1 .21V6.3l-8 1.33z"/></svg></div>
+          <h4>Midnight Static</h4>
+          <p class="by">Lumen Harbor · your seed song</p>
+          <p class="ask">What do you want right now?</p>
+          <div class="chips"><span class="on">New to me</span><span>Stay close</span><span>Mix</span></div>
+          <div class="dial">Familiar<div></div>New</div>
+          <span class="label" style="color:#aaa;font-size:10px;margin:0">UP NEXT</span>
+          <div class="up"><i style="background:var(--lav)"></i><div><b>Paper Lanterns</b><small>New to you · same dreamy guitars</small></div></div>
+          <div class="up"><i style="background:var(--orange)"></i><div><b>Low Tide Radio</b><small>Fans of your seed love this</small></div></div>
+          <span class="num mk" style="top:53%">1</span>
+          <span class="num mk" style="top:64%">2</span>
+        </div>
+      </div>
+      <div>
+        <p class="cap">WITH COACH · MID-SESSION</p>
+        <div class="mock">
+          <p class="top">Now playing · Coach on</p>
+          <div class="np"><i></i><div><b style="font-size:17px">Neon Hallway</b><br><span style="color:#aaa">Copper Kites</span></div></div>
+          <div class="prog"></div>
+          <div class="box coach"><span class="label">COACH</span><b>You skipped 4 upbeat songs. Keep it mellow?</b><div class="acts"><span>Yes, keep it mellow</span><span class="no">No</span></div></div>
+          <div class="box"><b>✓ Got it. 6 similar songs removed.</b><br><span style="color:#aaa">They won’t come back.</span> <u>Undo</u></div>
+          <div class="box"><span class="label" style="color:#aaa">WHY THIS SONG?</span>You started from Midnight Static: same dreamy guitars, slow tempo, and new to you.</div>
+          <span class="num mk" style="top:38%">3</span>
+          <span class="num mk" style="top:63%">4</span>
+          <span class="num mk" style="top:84%">5</span>
+        </div>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="num">1</span><div><h3>Intent check-in <span class="pill">P0</span></h3><p>One tap before radio starts: New to me, Stay close or Mix. Or type it.</p></div></div>
+        <div class="feat"><span class="num">2</span><div><h3>Discovery dial <span class="pill">P0</span></h3><p>Familiar ↔ New for this session. The session beats your history.</p></div></div>
+        <div class="feat"><span class="num">3</span><div><h3>Live coaching <span class="pill">P0</span></h3><p>Spots skip patterns and offers a one-tap fix.</p></div></div>
+        <div class="feat"><span class="num">4</span><div><h3>Feedback that sticks <span class="pill">P0</span></h3><p>Removed songs never return, and a receipt proves it.</p></div></div>
+        <div class="feat"><span class="num">5</span><div><h3>Why this song <span class="pill p1">P1</span></h3><p>A plain-words reason tied to your seed song.</p></div></div>
+        <p class="serif" style="font-size:20px">Lives inside Song Radio, Smart Shuffle and autoplay. No new tab, no new habit.</p>
+      </div>
+    </div>
+    <p class="note" style="color:#174d2a">Track and artist names in the mockups are invented.</p>
+  </div>
+</section>
+
+<!-- 12 EXPERIMENT -->
+<section class="s-blue" id="experiment">
+  <div class="wrap">
+    <span class="eyebrow" style="color:#d6dcff">11 · Experiment design</span>
+    <h2>Prove it with a 4-week A/B test</h2>
+    <span class="label y">Hypothesis</span>
+    <p class="hyp">If Premium listeners can steer radio with intent chips, a discovery dial and sticky feedback, then new-track saves per user rise 10% or more, because more of what plays is both new and a good fit.</p>
+    <div class="exp">
+      <div class="cards6">
+        <div class="card hov"><span class="label">Who</span><p>Premium users who start Song Radio, Smart Shuffle or autoplay 2+ times a week. Android and iOS; India, US, UK.</p></div>
+        <div class="card hov"><span class="label">Unit</span><p>Randomise by user, sticky across devices, so no one ever sees both versions.</p></div>
+        <div class="card hov"><span class="label">Split + length</span><p>50 / 50 for 4 weeks to cover weekly cycles. Read week 1 separately for novelty.</p></div>
+        <div class="card hov"><span class="label">Sample size</span><p>North Star: <b>~6.5K per arm</b>. Churn guardrail: <b>~200K per arm</b>, so we size for churn.</p><small>α 0.05 · power 0.8 · assumed baselines (20% weekly savers; 3% monthly churn)</small></div>
+        <div class="card hov"><span class="label">Metrics</span><p>Primary: new-track saves per user. Secondary: early skips, freshness, repeat ratio. Guardrails: listening time, churn, nudge dismissals, crashes.</p></div>
+        <div class="card hov"><span class="label">Ship if</span><p>North Star up (p &lt; 0.05), early skips down and freshness up, and no guardrail past its limit (e.g. listening time −1%).</p></div>
+      </div>
+      <div>
+        <span class="label y">Rollout</span>
+        <ul class="roll">
+          <li><i></i><div><b>Dogfood · 2 weeks</b><span>Employees; fix bugs, tune nudges</span></div></li>
+          <li><i></i><div><b>Canary · 1% · 1 week</b><span>Crashes, latency, quality of reasons</span></div></li>
+          <li><i class="g"></i><div><b>A/B · 50/50 · 4 weeks</b><span>The decision test</span></div></li>
+          <li><i></i><div><b>Launch + 5% holdout</b><span>3 months to read retention</span></div></li>
+        </ul>
+        <div class="risks">
+          <span class="label">Risks → fixes</span>
+          <p>Novelty spike → read week 1 apart</p>
+          <p>Lean-back users ignore chips → smart defaults</p>
+          <p>Uneven split → daily sample-ratio check</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 SUCCESS -->
+<section class="dark" id="metrics">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--green)">12 · Success metrics</span>
+    <h2>Success means Spotify listens to you</h2>
+    <div class="succ">
+      <div>
+        <div class="tree">
+          <div class="node top">Spotify listens to you<small>the motto</small></div>
+          <div class="link"></div>
+          <div class="row r3">
+            <div class="node">DAU&nbsp;↑<small>daily active users</small></div>
+            <div class="node">Premium retention&nbsp;↑<small>lower churn</small></div>
+            <div class="node">Listening time&nbsp;↑<small>minutes per user</small></div>
+          </div>
+          <div class="link"></div>
+          <div class="node ns">New-track saves per user&nbsp;↑<small>North Star · weekly, from radio · the one number we chase</small></div>
+          <div class="link"></div>
+          <div class="row r4">
+            <div class="node dr">Early skips&nbsp;↓<small>radio, under 30s</small></div>
+            <div class="node dr">Repeat ratio&nbsp;↓<small>recycled songs</small></div>
+            <div class="node dr">Freshness&nbsp;↑<small>new tracks heard</small></div>
+            <div class="node dr">Save rate&nbsp;↑<small>new tracks kept</small></div>
+          </div>
+        </div>
+        <p class="note">Read it bottom-up: fewer early skips and repeats make room for fresh tracks that fit, which moves the North Star, which feeds the business metrics.</p>
+        <div class="lie"><b>!</b><div><h3>Skip rate alone can lie.</h3><p>A very low skip rate can mean radio only plays familiar songs: the echo chamber we are fighting. Early skips must fall while freshness rises. We count skips under 30 seconds, on radio only.</p></div></div>
+      </div>
+      <div>
+        <div class="tscroll">
+        <table class="st">
+          <thead><tr><th>Metric</th><th>Type</th><th>Target</th></tr></thead>
+          <tbody>
+            <tr><td>DAU, Coach vs control</td><td>Business</td><td>+0.5–1%</td></tr>
+            <tr><td>Premium churn</td><td>Business</td><td>−5% rel.</td></tr>
+            <tr><td>Listening time</td><td>Business</td><td>no drop</td></tr>
+            <tr class="ns"><td>New-track saves per user</td><td>North Star</td><td>+10%</td></tr>
+            <tr><td>Early skip rate on radio</td><td>Driver</td><td>−15%</td></tr>
+            <tr><td>Repeat ratio across seeds</td><td>Driver</td><td>−20%</td></tr>
+            <tr><td>Freshness (new, 30s+)</td><td>Driver</td><td>+15%</td></tr>
+            <tr><td>Save rate on new tracks</td><td>Driver</td><td>+5%</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="note">Targets are assumptions, set without Spotify baseline data. Small business targets are deliberate: even 1% of DAU is a big win at Spotify’s scale.</p>
+        <div class="take"><span>THE TAKEAWAY</span>Spotify doesn’t need another AI that makes playlists. It needs the radio to listen.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 LIMITS -->
+<section class="s-yellow" id="limits">
+  <div class="wrap">
+    <span class="eyebrow">13 · Limits + next steps</span>
+    <h2>What this teardown can’t prove yet</h2>
+    <div class="lim">
+      <div>
+        <span class="label">Honest limits</span>
+        <div class="limit"><span class="num">1</span><div><h3>One listener, one market</h3><p>Every screenshot comes from one Premium account in India, on Android. Free tier, iOS and other markets may behave differently.</p></div></div>
+        <div class="limit"><span class="num">2</span><div><h3>51 reviews, skewed negative</h3><p>Play Store reviews over-sample unhappy users. The counts show themes, not how common each problem is.</p></div></div>
+        <div class="limit"><span class="num">3</span><div><h3>An illustrative funnel</h3><p>The shape rests on one poll and a few Community posts. The numbers are an index, not Spotify data.</p></div></div>
+        <div class="limit"><span class="num">4</span><div><h3>Personas, scores and targets are assumptions</h3><p>No interviews and no baselines yet. Every RICE score and metric target should be re-set with real data.</p></div></div>
+        <p class="ask2">Disagree with a score? Tell me which one.</p>
+      </div>
+      <div>
+        <div class="next">
+          <span class="label">First 30 days with real data</span>
+          <ul>
+            <li><b>01</b><div><strong>Measure freshness by surface</strong><span>Radio, Smart Shuffle and autoplay: where does the leak really sit?</span></div></li>
+            <li><b>02</b><div><strong>Interview 8–10 listeners</strong><span>Do Arjun, Meera and Rahul exist, and in what proportion?</span></div></li>
+            <li><b>03</b><div><strong>Re-score RICE</strong><span>Swap assumed reach and effort for real numbers.</span></div></li>
+            <li><b>04</b><div><strong>Prototype the intent check-in</strong><span>Five Explorers, one clickable radio, before any model work.</span></div></li>
+          </ul>
+          <a class="btn" href="Spotify_Teardown_Playlist_Coach.pdf" download>Download the full deck (PDF)</a>
+        </div>
+        <p class="src"><b>Sources:</b> Spotify Q3 2026 results · Google Play listing and 51 reviews · Digital Music News poll (1,067 votes) · Spotify Community threads · Android Authority · SoundGuys · my own screenshots, Oct 2026.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>© 2026 Jyotiraditya Bordoloi · <a href="mailto:jyotiraditybordoloi@gmail.com">Email</a> · <a href="https://www.linkedin.com/in/jyotiraditya-bordoloi-721879237/" target="_blank" rel="noopener">LinkedIn</a><br>An independent product case study, not affiliated with or endorsed by Spotify. Screenshots are from my own account; mockup names are invented.</p>
+    <a href="index.html">← Back to the one-page summary</a>
+  </div>
+</footer>
+</body>
+</html>
